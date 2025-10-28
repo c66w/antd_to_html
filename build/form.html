@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>注册表单</title>
+  <style>
+:root {
+  color-scheme: light;
+  --primary-color: #1677ff;
+  --primary-hover: #0958d9;
+  --primary-light: #e6f4ff;
+  --border-color: #d9d9d9;
+  --border-strong: #bfbfbf;
+  --surface-color: #ffffff;
+  --surface-muted: #f7f9fc;
+  --background-color: #eef1f8;
+  --text-color: #1f1f1f;
+  --text-secondary: #595959;
+  --text-tertiary: #8c8c8c;
+  --danger-color: #ff4d4f;
+  --success-color: #52c41a;
+  --shadow-color: rgba(15, 23, 42, 0.16);
+  font-size: 16px;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(180deg, #dcedff 0%, #eef6ff 45%, #ffffff 100%);
+  padding: 48px 16px;
+  color: var(--text-color);
+  line-height: 1.55;
+}
+a {
+  color: var(--primary-color);
+}
+.form-container {
+  max-width: 920px;
+  margin: 0 auto;
+  background: var(--surface-color);
+  border-radius: 18px;
+  border: 1px solid rgba(22, 119, 255, 0.08);
+  box-shadow: 0 40px 90px -48px rgba(22, 44, 90, 0.35);
+  overflow: hidden;
+}
+.generated-form {
+  padding: 40px 48px;
+  display: block;
+}
+.form-header {
+  margin-bottom: 32px;
+}
+.form-title {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+.form-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -12px 24px;
+}
+.form-col {
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+.form-item {
+  background: var(--surface-muted);
+  border: 1px solid rgba(9, 88, 217, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.form-item:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 12px 24px -16px rgba(22, 119, 255, 0.5);
+  transform: translateY(-1px);
+  background: #fbfdff;
+}
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: none;
+}
+.required-asterisk {
+  color: var(--danger-color);
+  font-size: 16px;
+  margin-left: 4px;
+}
+.form-item > input,
+.form-item > select,
+.form-item > textarea,
+.form-item .radio-group,
+.form-item .checkbox-group,
+.form-item .switch,
+.form-item .form-list {
+  width: 100%;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+  color: var(--text-color);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+::placeholder {
+  color: var(--text-tertiary);
+}
+.form-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.form-help {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+.form-extra {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+.radio-group,
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.radio-group label,
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.radio-group input,
+.checkbox-group input {
+  width: auto;
+  accent-color: var(--primary-color);
+}
+.form-divider {
+  border: none;
+  border-bottom: 1px dashed rgba(22, 119, 255, 0.3);
+  margin: 32px 0;
+}
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 54px;
+  height: 28px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s ease;
+  border-radius: 28px;
+}
+.switch .slider::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.switch input:checked + .slider {
+  background-color: var(--primary-color);
+}
+.switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+button {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 10px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  background-color: #fff;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px -18px var(--shadow-color);
+}
+button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.primary-button {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  color: #fff;
+  border: none;
+  box-shadow: 0 18px 30px -20px rgba(9, 88, 217, 0.7);
+}
+.primary-button:hover {
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+}
+.secondary-button {
+  background: #fff;
+  color: var(--primary-color);
+  border-color: rgba(22, 119, 255, 0.4);
+}
+.secondary-button:hover {
+  background: var(--primary-light);
+}
+.form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-list-item {
+  border: 1px dashed rgba(22, 119, 255, 0.4);
+  border-radius: 12px;
+  padding: 18px 20px;
+  background: rgba(22, 119, 255, 0.04);
+  position: relative;
+}
+.form-list-item-label {
+  font-weight: 600;
+  color: var(--text-color);
+}
+.form-list-item-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.form-list-item-help {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.form-list-empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  padding: 14px;
+  border: 1px dashed rgba(22, 119, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(22, 119, 255, 0.06);
+}
+.list-add,
+.list-remove {
+  border-style: dashed;
+  border-width: 1px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.list-add {
+  color: var(--primary-color);
+  border-color: rgba(22, 119, 255, 0.4);
+  background: rgba(22, 119, 255, 0.08);
+}
+.list-add:hover {
+  background: rgba(22, 119, 255, 0.15);
+}
+.list-remove {
+  color: var(--danger-color);
+  border-color: rgba(255, 77, 79, 0.4);
+  background: rgba(255, 77, 79, 0.08);
+}
+.list-remove:hover {
+  background: rgba(255, 77, 79, 0.16);
+}
+@media (max-width: 900px) {
+  .generated-form {
+    padding: 32px 28px;
+  }
+}
+@media (max-width: 768px) {
+  body {
+    padding: 32px 12px;
+  }
+  .form-row {
+    flex-direction: column;
+    margin: 0 0 20px;
+  }
+  .form-col {
+    padding: 0 !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+  .form-item {
+    padding: 16px 18px;
+  }
+  .form-actions {
+    justify-content: stretch;
+  }
+  .form-actions button {
+    flex: 1;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="form-container">
+    <form id="registration-form" class="generated-form demo-form layout-vertical" action="/submit" method="post">
+      <header class="form-header"><h1 class="form-title">注册账号</h1><p class="form-subtitle">填写基本信息以创建新的工作空间账号。</p></header>
+      <div class="form-row">
+  <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
+    <div class="form-item">
+      <label class="form-label" for="username">用户名<span class="required-asterisk">*</span></label>
+      <input id="username" name="username" placeholder="请输入用户名" required type="text" />
+      <div class="form-description">用户名将会显示在公开页面。</div>
+      <div class="form-help">支持英文字母、数字或下划线。</div>
+      
+    </div>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
+    <div class="form-item">
+      <label class="form-label" for="password">登录密码<span class="required-asterisk">*</span></label>
+      <input id="password" name="password" placeholder="请输入密码" required type="password" />
+      
+      
+      
+    </div>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-col" style="flex: 0 0 50%; max-width: 50%">
+    <div class="form-item">
+      <label class="form-label" for="country">所在国家/地区<span class="required-asterisk">*</span></label>
+      <select id="country" name="country" placeholder="请选择" required>
+  <option value="cn">中国</option>
+  <option value="us">美国</option>
+  <option value="jp">日本</option>
+</select>
+      
+      
+      
+    </div>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
+    <div class="form-item">
+      <label class="form-label" for="subscription">订阅类型</label>
+      <div class="radio-group"><label for="subscription-0"><input type="radio" id="subscription-0" name="subscription" value="free" checked /> 免费版</label><label for="subscription-1"><input type="radio" id="subscription-1" name="subscription" value="pro" /> 专业版</label><label for="subscription-2"><input type="radio" id="subscription-2" name="subscription" value="enterprise" /> 企业版</label></div>
+      
+      <div class="form-help">不同版本提供不同的功能权限。</div>
+      
+    </div>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
+    <div class="form-item">
+      <label class="form-label" for="contacts">紧急联系人</label>
+      <div class="form-list" data-name="contacts">
+  <div class="form-list-items" data-min="0" data-max="">
+    
+  </div>
+  <div class="form-list-empty" data-empty>还没有联系人，点击“新增联系人”添加一条。</div>
+  <div class="form-list-actions">
+    <button type="button" class="list-add" data-action="add">新增联系人</button>
+  </div>
+  <template id="contacts-template">
+  <div class="form-list-item">
+    <div class="form-list-item-label">联系人姓名</div>
+    <input id="name" name="name" placeholder="请输入联系人姓名" required type="text" />
+    <button type="button" class="list-remove" data-action="remove">删除</button>
+  </div>
+</template>
+</div>
+      
+      
+      
+    </div>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
+    <div class="form-item">
+      <label class="form-label" for="agreement">阅读并同意服务条款<span class="required-asterisk">*</span></label>
+      <label class="switch">
+  <input type="checkbox" id="agreement" name="agreement" required />
+  <span class="slider"></span>
+</label>
+      
+      <div class="form-help">选中表示你已阅读并接受条款。</div>
+      
+    </div>
+  </div>
+</div>
+      <div class="form-actions">
+        <button type="submit" class="primary-button" id="submit-btn">确认提交</button>
+<button type="reset" class="secondary-button">重置</button>
+      </div>
+    </form>
+  </div>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.form-list').forEach(list => {
+    const template = list.querySelector('template');
+    const itemsContainer = list.querySelector('.form-list-items');
+    if (!template || !itemsContainer) return;
+    const min = parseInt(itemsContainer.dataset.min, 10) || 0;
+    const max = parseInt(itemsContainer.dataset.max, 10) || Infinity;
+    const baseName = list.dataset.name || '';
+
+    const refresh = () => {
+      const items = Array.from(itemsContainer.querySelectorAll('.form-list-item'));
+      const emptyState = list.querySelector('[data-empty]');
+      if (emptyState) {
+        emptyState.style.display = items.length ? 'none' : 'block';
+      }
+      items.forEach((item, index) => {
+        item.querySelectorAll('[name]').forEach(control => {
+          if (!control.dataset.baseName) {
+            control.dataset.baseName = control.getAttribute('name') || '';
+          }
+          const preserve = control.dataset.preserveName === 'true';
+          const base = control.dataset.baseName;
+          if (!baseName || !base || preserve) {
+            return;
+          }
+          if (base.includes('[') || base.includes(']')) {
+            return;
+          }
+          control.name = baseName + '[' + index + '].' + base;
+          const sanitized = base
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          if (control.id) {
+            control.id = baseName + '-' + index + '-' + sanitized;
+          }
+        });
+      });
+    };
+
+    refresh();
+
+    list.addEventListener('click', event => {
+      const action = event.target.dataset.action;
+      if (action === 'add') {
+        if (itemsContainer.querySelectorAll('.form-list-item').length >= max) {
+          return;
+        }
+        const prototype = template.content.firstElementChild;
+        if (!prototype) return;
+        const clone = prototype.cloneNode(true);
+        itemsContainer.appendChild(clone);
+        refresh();
+      }
+      if (action === 'remove') {
+        const item = event.target.closest('.form-list-item');
+        if (!item) return;
+        if (itemsContainer.querySelectorAll('.form-list-item').length <= min) {
+          return;
+        }
+        item.remove();
+        refresh();
+      }
+    });
+  });
+});
+</script>
+<script>
+(function() {
+  var CONFIG = {"callbackUrl":"{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit","method":"POST","callbackParams":{"operate_type":"task_execute","thread_id":"{{ thread_id }}","plan_instance_id":"{{ plan_instance_id }}","node_id":"{{ node_id }}","exec_run_id":"{{ exec_run_id }}"},"headers":{"Accept":"application/json, text/x-json","Content-Type":"application/json"},"buttonSelector":"#submit-btn","idleText":"确认提交","pendingText":"提交中...","successText":"已提交","failureText":"提交失败","errorClass":"field-error","validationMessagePrefix":"请填写所有必填项："};
+
+  function ready(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
+  }
+
+  function findLabelFor(element) {
+    if (!element || !element.id) return null;
+    var labels = document.querySelectorAll('label[for]');
+    for (var i = 0; i < labels.length; i += 1) {
+      if (labels[i].htmlFor === element.id) {
+        return labels[i];
+      }
+    }
+    return null;
+  }
+
+  function resolveFieldLabel(element, fallback) {
+    var direct = findLabelFor(element);
+    if (direct && direct.textContent) {
+      return direct.textContent.trim() || fallback;
+    }
+    var container = element ? element.closest('.form-item') : null;
+    if (container) {
+      var formLabel = container.querySelector('.form-label');
+      if (formLabel && formLabel.textContent) {
+        return formLabel.textContent.trim() || fallback;
+      }
+    }
+    var listItem = element ? element.closest('.form-list-item') : null;
+    if (listItem) {
+      var listLabel = listItem.querySelector('.form-list-item-label');
+      if (listLabel && listLabel.textContent) {
+        return listLabel.textContent.trim() || fallback;
+      }
+    }
+    return fallback;
+  }
+
+  function detectFieldType(element) {
+    if (!element) return 'text';
+    if (element.type === 'checkbox') return 'checkbox';
+    if (element.type === 'radio') return 'radio';
+    if (element.tagName === 'SELECT') {
+      return element.multiple ? 'select-multiple' : 'select';
+    }
+    return 'text';
+  }
+
+  function collectFieldInfo(form) {
+    var map = Object.create(null);
+    var order = [];
+    var controls = form.querySelectorAll('[name]');
+    for (var i = 0; i < controls.length; i += 1) {
+      var control = controls[i];
+      var name = control.getAttribute('name');
+      if (!name) continue;
+      if (!map[name]) {
+        map[name] = {
+          name: name,
+          elements: [],
+          label: resolveFieldLabel(control, name),
+          required: false,
+          type: detectFieldType(control),
+          container: control.closest('.form-item') || null
+        };
+        order.push(map[name]);
+      }
+      var info = map[name];
+      info.elements.push(control);
+      if (control.required) {
+        info.required = true;
+      }
+      var detected = detectFieldType(control);
+      if (detected !== 'text') {
+        info.type = detected;
+      }
+      if (!info.container) {
+        info.container = control.closest('.form-item') || null;
+      }
+    }
+    return order;
+  }
+
+  function hasValue(info) {
+    if (!info || !info.elements.length) return false;
+    if (info.type === 'checkbox') {
+      for (var i = 0; i < info.elements.length; i += 1) {
+        if (info.elements[i].checked) return true;
+      }
+      return false;
+    }
+    if (info.type === 'radio') {
+      for (var j = 0; j < info.elements.length; j += 1) {
+        if (info.elements[j].checked) return true;
+      }
+      return false;
+    }
+    if (info.type === 'select-multiple') {
+      var select = info.elements[0];
+      var options = select && select.selectedOptions ? select.selectedOptions : [];
+      return options.length > 0;
+    }
+    var element = info.elements[0];
+    if (typeof element.value === 'string') {
+      return element.value.trim() !== '';
+    }
+    return Boolean(element.value);
+  }
+
+  function getOptionLabel(element, fallback) {
+    var label = element.closest('label');
+    if (label && label.childNodes.length > 0) {
+      var clone = label.cloneNode(true);
+      var inputs = clone.querySelectorAll('input');
+      for (var i = inputs.length - 1; i >= 0; i -= 1) {
+        inputs[i].remove();
+      }
+      var text = clone.textContent ? clone.textContent.trim() : '';
+      return text || fallback;
+    }
+    if (element.tagName === 'OPTION') {
+      return element.textContent.trim() || fallback;
+    }
+    return fallback;
+  }
+
+  function collectPayload(fields) {
+    var rows = [];
+    for (var i = 0; i < fields.length; i += 1) {
+      var info = fields[i];
+      if (!info.elements.length) continue;
+      if (info.type === 'checkbox') {
+        var values = [];
+        for (var j = 0; j < info.elements.length; j += 1) {
+          var checkbox = info.elements[j];
+          if (!checkbox.checked) continue;
+          values.push({
+            label: getOptionLabel(checkbox, info.label),
+            value: checkbox.value
+          });
+        }
+        if (values.length) {
+          rows.push({ label: info.label, name: info.name, value: values });
+        }
+        continue;
+      }
+      if (info.type === 'radio') {
+        var selected = null;
+        for (var k = 0; k < info.elements.length; k += 1) {
+          if (info.elements[k].checked) {
+            selected = info.elements[k];
+            break;
+          }
+        }
+        if (selected) {
+          rows.push({
+            label: info.label,
+            name: info.name,
+            value: {
+              label: getOptionLabel(selected, info.label),
+              value: selected.value
+            }
+          });
+        }
+        continue;
+      }
+      if (info.type === 'select-multiple') {
+        var select = info.elements[0];
+        var options = select && select.selectedOptions ? select.selectedOptions : [];
+        var selectedValues = [];
+        for (var m = 0; m < options.length; m += 1) {
+          var option = options[m];
+          selectedValues.push({
+            label: getOptionLabel(option, option.value),
+            value: option.value
+          });
+        }
+        rows.push({ label: info.label, name: info.name, value: selectedValues });
+        continue;
+      }
+      var element = info.elements[0];
+      rows.push({ label: info.label, name: info.name, value: element.value });
+    }
+    return { form_info: rows };
+  }
+
+  function clearErrors(fields, errorClass) {
+    for (var i = 0; i < fields.length; i += 1) {
+      var info = fields[i];
+      for (var j = 0; j < info.elements.length; j += 1) {
+        var el = info.elements[j];
+        el.classList.remove('error');
+        el.removeAttribute('data-submit-error');
+      }
+      if (info.container) {
+        info.container.classList.remove(errorClass);
+      }
+    }
+  }
+
+  function markErrors(fields, errorClass) {
+    for (var i = 0; i < fields.length; i += 1) {
+      var info = fields[i];
+      for (var j = 0; j < info.elements.length; j += 1) {
+        var el = info.elements[j];
+        el.classList.add('error');
+        el.setAttribute('data-submit-error', 'true');
+      }
+      if (info.container) {
+        info.container.classList.add(errorClass);
+      }
+    }
+  }
+
+  function alertMissing(fields) {
+    if (!fields.length) return;
+    var labels = [];
+    for (var i = 0; i < fields.length; i += 1) {
+      labels.push(fields[i].label);
+    }
+    var message = labels.join(', ');
+    var prefix = typeof CONFIG.validationMessagePrefix === 'string'
+      ? CONFIG.validationMessagePrefix
+      : 'Please fill all required fields: ';
+    try {
+      window.alert(prefix + message);
+    } catch (_) {
+      // ignore alert errors
+    }
+    var target = fields[0];
+    if (target) {
+      var focusable = target.elements[0];
+      if (focusable && typeof focusable.focus === 'function') {
+        focusable.focus({ preventScroll: false });
+      }
+      var container = target.container || focusable;
+      if (container && typeof container.scrollIntoView === 'function') {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
+  function setButtonState(button, text, disabled) {
+    if (typeof text === 'string' && text.length) {
+      button.textContent = text;
+    }
+    if (typeof disabled === 'boolean') {
+      button.disabled = disabled;
+      button.classList.toggle('submit-btn-disabled', disabled);
+      button.classList.toggle('is-submit-disabled', disabled);
+    }
+  }
+
+  function buildRequestPayload(fields) {
+    var base = Object.assign({}, CONFIG.callbackParams || {});
+    base.feedback_data = { user_collect_data: collectPayload(fields) };
+    return base;
+  }
+
+  ready(function() {
+    var button = document.querySelector(CONFIG.buttonSelector || 'button[type="submit"]');
+    if (!button) return;
+    var form = button.closest('form') || document.querySelector('form');
+    if (!form) return;
+
+    var errorClass = CONFIG.errorClass || 'field-error';
+
+    var idleText = typeof CONFIG.idleText === 'string' ? CONFIG.idleText : button.textContent;
+    var pendingText = CONFIG.pendingText || button.textContent;
+    var successText = CONFIG.successText || button.textContent;
+    var failureText = CONFIG.failureText || button.textContent;
+
+    if (typeof CONFIG.idleText === 'string') {
+      button.textContent = CONFIG.idleText;
+    }
+
+    function handle(event) {
+      event.preventDefault();
+
+      var fields = collectFieldInfo(form);
+
+      clearErrors(fields, errorClass);
+
+      var invalid = [];
+      for (var i = 0; i < fields.length; i += 1) {
+        var info = fields[i];
+        if (info.required && !hasValue(info)) {
+          invalid.push(info);
+        }
+      }
+
+      if (invalid.length) {
+        setButtonState(button, idleText, false);
+        markErrors(invalid, errorClass);
+        alertMissing(invalid);
+        return;
+      }
+
+      setButtonState(button, pendingText, true);
+
+      var payload = buildRequestPayload(fields);
+
+      fetch(CONFIG.callbackUrl, {
+        method: CONFIG.method,
+        headers: CONFIG.headers,
+        body: JSON.stringify(payload)
+      })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Request failed with status ' + response.status);
+          }
+          var contentType = response.headers.get('content-type') || '';
+          if (response.status === 204 || !contentType.includes('application/json')) {
+            return null;
+          }
+          return response.json().catch(function() { return null; });
+        })
+        .then(function() {
+          setButtonState(button, successText, true);
+        })
+        .catch(function(error) {
+          console.error('[form-submit] request failed:', error);
+          setButtonState(button, failureText, false);
+        });
+    }
+
+    form.addEventListener('submit', handle);
+    if (button.type !== 'submit') {
+      button.addEventListener('click', handle);
+    }
+  });
+})();
+</script>
+</body>
+</html>

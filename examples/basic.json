@@ -1,0 +1,103 @@
+{
+  "id": "registration-form",
+  "action": "/submit",
+  "method": "post",
+  "title": "注册账号",
+  "subtitle": "填写基本信息以创建新的工作空间账号。",
+  "form": {
+    "layout": "vertical",
+    "className": "demo-form"
+  },
+  "items": [
+    {
+      "type": "input",
+      "name": "username",
+      "label": "用户名",
+      "placeholder": "请输入用户名",
+      "required": true,
+      "description": "用户名将会显示在公开页面。",
+      "help": "支持英文字母、数字或下划线。"
+    },
+    {
+      "type": "password",
+      "name": "password",
+      "label": "登录密码",
+      "placeholder": "请输入密码",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "country",
+      "label": "所在国家/地区",
+      "placeholder": "请选择",
+      "options": [
+        { "label": "中国", "value": "cn" },
+        { "label": "美国", "value": "us" },
+        { "label": "日本", "value": "jp" }
+      ],
+      "required": true,
+      "colSpan": 12
+    },
+    {
+      "type": "radio-group",
+      "name": "subscription",
+      "label": "订阅类型",
+      "options": [
+        { "label": "免费版", "value": "free" },
+        { "label": "专业版", "value": "pro" },
+        { "label": "企业版", "value": "enterprise" }
+      ],
+      "defaultValue": "free",
+      "help": "不同版本提供不同的功能权限。"
+    },
+    {
+      "type": "form-list",
+      "name": "contacts",
+      "label": "紧急联系人",
+      "addLabel": "新增联系人",
+      "removeLabel": "删除",
+      "emptyText": "还没有联系人，点击“新增联系人”添加一条。",
+      "startEmpty": true,
+      "item": {
+        "type": "input",
+        "name": "name",
+        "label": "联系人姓名",
+        "placeholder": "请输入联系人姓名",
+        "required": true
+      }
+    },
+    {
+      "type": "switch",
+      "name": "agreement",
+      "label": "阅读并同意服务条款",
+      "help": "选中表示你已阅读并接受条款。",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "label": "确认提交",
+      "primary": true,
+      "htmlAttributes": {
+        "id": "submit-btn"
+      }
+    },
+    { "label": "重置", "htmlType": "reset" }
+  ],
+  "submit": {
+    "callbackUrl": "{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit",
+    "callbackParams": {
+      "operate_type": "task_execute",
+      "thread_id": "{{ thread_id }}",
+      "plan_instance_id": "{{ plan_instance_id }}",
+      "node_id": "{{ node_id }}",
+      "exec_run_id": "{{ exec_run_id }}"
+    },
+    "buttonSelector": "#submit-btn",
+    "idleText": "确认提交",
+    "pendingText": "提交中...",
+    "successText": "已提交",
+    "failureText": "提交失败",
+    "validationMessagePrefix": "请填写所有必填项："
+  }
+}
