@@ -5,6 +5,7 @@ import process from 'node:process';
 import { convertAntdFormToHtml } from './index.js';
 
 const PORT = Number.parseInt(process.env.PORT || '3000', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 const MAX_BODY_SIZE = 1024 * 1024; // 1MB
 
 const server = http.createServer(async (req, res) => {
@@ -19,7 +20,9 @@ const server = http.createServer(async (req, res) => {
 
   let pathname = '/';
   try {
-    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    // Use the incoming Host header when available, otherwise fall back to HOST:PORT.
+    const fallbackHost = `${HOST}:${PORT}`;
+    const url = new URL(req.url || '/', `http://${req.headers.host || fallbackHost}`);
     pathname = url.pathname;
   } catch (error) {
     respondJson(res, 400, { error: 'Invalid request URL.' });
@@ -64,7 +67,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`antd-to-html API listening on http://localhost:${PORT}`);
+  console.log(`antd-to-html API listening on http://${HOST}:${PORT}`);
 });
 
 function readJsonBody(req) {
