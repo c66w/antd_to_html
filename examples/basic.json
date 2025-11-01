@@ -74,30 +74,17 @@
       "required": true
     }
   ],
-  "actions": [
-    {
-      "label": "确认提交",
-      "primary": true,
-      "htmlAttributes": {
-        "id": "submit-btn"
+  "submit": {
+    "callback": {
+      "url": "{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit",
+      "params": {
+        "operate_type": "task_execute",
+        "thread_id": "{{ thread_id }}",
+        "plan_instance_id": "{{ plan_instance_id }}",
+        "node_id": "{{ node_id }}",
+        "exec_run_id": "{{ exec_run_id }}"
       }
     },
-    { "label": "重置", "htmlType": "reset" }
-  ],
-  "submit": {
-    "callbackUrl": "{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit",
-    "callbackParams": {
-      "operate_type": "task_execute",
-      "thread_id": "{{ thread_id }}",
-      "plan_instance_id": "{{ plan_instance_id }}",
-      "node_id": "{{ node_id }}",
-      "exec_run_id": "{{ exec_run_id }}"
-    },
-    "buttonSelector": "#submit-btn",
-    "idleText": "确认提交",
-    "pendingText": "提交中...",
-    "successText": "已提交",
-    "failureText": "提交失败",
     "validationMessagePrefix": "请填写所有必填项："
   }
 }

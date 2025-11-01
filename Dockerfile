@@ -1,16 +1,21 @@
-FROM node:20-alpine AS base
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY pyproject.toml ./
+COPY src ./src
+COPY .env ./.env
 
-RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+ && pip install --upgrade pip \
+ && pip install --no-cache-dir -e .
 
-COPY . .
+COPY schema.sql ./schema.sql
 
-ENV NODE_ENV=production
-ENV PORT=6422
+ENV PORT=8400
+EXPOSE 8400
 
-EXPOSE 6422
-
-CMD ["npm", "start"]
+CMD ["uvicorn", "antd_to_html.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8400"]

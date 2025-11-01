@@ -7,8 +7,8 @@ set -euo pipefail
 
 SERVICE_NAME="${SERVICE_NAME:-antd-to-html}"
 IMAGE_NAME="${IMAGE_NAME:-antd-to-html}"
-HOST_PORT="${HOST_PORT:-6422}"
-CONTAINER_PORT="${CONTAINER_PORT:-6422}"
+HOST_PORT="${HOST_PORT:-8400}"
+CONTAINER_PORT="${CONTAINER_PORT:-8400}"
 
 log() {
   printf '[redeploy] %s\n' "$*"

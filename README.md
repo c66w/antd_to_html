@@ -1,147 +1,155 @@
 # antd-to-html
 
-Convert Ant Design form JSON definitions into self-contained HTML markup. The tool reads a simplified Ant Design schema, maps known components to semantic HTML, applies layout rules, and emits a ready-to-use `<form>` document with an Ant Design–inspired visual theme.
+一个将 Ant Design 表单 JSON 转换为可直接访问的 HTML 页面，并支持模板管理、实例配置与数据提交链路的 Python 服务。
 
-## Quick start
+## 快速上手
 
-1. Prepare a form schema (see [`examples/basic.json`](examples/basic.json) for a reference).
-2. Run the converter:
-
+1. 创建虚拟环境并安装依赖（Python ≥ 3.11）：
    ```bash
-   node src/cli.js examples/basic.json --title "注册表单" -o build/form.html
+   python -m venv .venv
+   source .venv/bin/activate
+   pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+   pip install --upgrade pip
+   pip install -e .
    ```
 
-3. Open the generated HTML in your browser.
+2. 复制环境变量样例并按需修改：
+   ```bash
+   cp env.example .env
+   ```
 
-The default output includes a polished gradient background, card-like form container, and button/input styling that mirrors Ant Design. Pass `--no-styles` to strip the theme, or provide `--styles custom.css` to inject your own stylesheet.
+3. 初始化数据库（PostgreSQL ≥ 13）：
+   ```bash
+   psql -h 192.168.110.23 -U postgres -d form -f schema.sql
+   ```
 
-### Run as an HTTP API
+4. 可选：验证数据库连通性。
+   ```bash
+   python scripts/test_db.py
+   ```
 
-```bash
-npm run serve
-```
+5. 启动 FastAPI 服务：
+   ```bash
+   uvicorn antd_to_html.app:create_app --factory --host 0.0.0.0 --port 8400
+   ```
 
-The service exposes a `POST /render-form` endpoint that expects the same Ant Design form JSON in the request body:
+## 典型流程
 
-```http
-POST /render-form
-Content-Type: application/json
-
-{
-  "definition": {
-    "id": "registration-form",
-    "title": "注册账号",
-    "items": [
-      { "type": "input", "name": "username", "label": "用户名", "required": true },
-      { "type": "password", "name": "password", "label": "密码", "required": true }
-    ],
-    "actions": [{ "label": "提交", "primary": true }]
-  },
-  "htmlOptions": {
-    "title": "自定义标题",
-    "includeStyles": true
+1. **创建模板** `POST /form-templates`
+   ```json
+   {
+     "slug": "registration-form",
+     "title": "注册账号",
+     "description": "基础注册信息",
+     "definition": {
+       "title": "注册账号",
+       "items": [
+       { "type": "input", "name": "username", "label": "用户名", "required": true },
+        { "type": "password", "name": "password", "label": "密码", "required": true }
+      ]
+    },
+    "html_options": { "title": "账号注册" }
   }
-}
-```
+   ```
 
-The response is a JSON payload containing the rendered HTML string:
+   如需自定义模板 ID，可额外提供 `id` 字段（默认自动生成 9 位小写字母+数字）。
+   未提供 `slug` 时会自动复用模板 `id`，可选地传入自定义 slug。
 
-```json
-{
-  "html": "<!DOCTYPE html>..."
-}
-```
+   可用 `DELETE /form-templates/{id_or_slug}` 删除模板。
 
-Extras:
+   想快速预览模板外观，可访问 `GET /form-templates/{id_or_slug}/preview`，浏览器会返回只读页面，按钮全部禁用以避免误提交。
 
-- `definition` can be omitted if you send the schema at the root level.
-- `htmlOptions` is optional; any properties you previously passed to the CLI are supported.
-- A lightweight CORS setup is enabled for convenience; adjust as needed before production.
-
-### Docker (port 6422)
-
-```bash
-docker build -t antd-to-html .
-docker run -d -p 6422:6422 --name antd-to-html antd-to-html
-```
-
-The container uses `PORT=6422` by default, so publishing `6422:6422` makes the API accessible from other hosts (e.g., `http://<server-ip>:6422/render-form`).
-
-## Usage
-
-```
-node src/cli.js <input.json> [output.html]
-```
-
-- `input.json`: Path to a JSON file describing the Ant Design form.
-- `output.html`: Optional path where the generated HTML should be written. If omitted, the HTML prints to stdout.
-
-## Development Notes
-
-The implementation is intentionally dependency-free. Core modules:
-
-- `src/schema.js`: input validation helpers.
-- `src/mappers.js`: maps Ant Design-like components to HTML snippets.
-- `src/layout.js`: interprets grid/layout properties.
-- `src/render.js`: assembles the final HTML document.
-- `src/index.js`: public API for converting JSON to HTML.
-- `src/cli.js`: command-line interface.
-
-See `examples/basic.json` for a sample schema.
-
-### Supported field types
-
-- `input`, `password`, `textarea`, `number`, `date-picker`, `switch`
-- `select`, `radio-group`, `checkbox-group`
-- `form-list` (dynamic repeated group with add/remove handlers)
-- `divider`
-
-Each item supports common props such as `label`, `description`, `help`, `colSpan`, `className`, `controlClassName`, `placeholder`, `required`, `disabled`, and `htmlAttributes` for low-level overrides. The `form-list` item receives an `item` definition describing its inner field along with list-specific options (`addLabel`, `removeLabel`, `emptyText`, `startEmpty`, `min`, `max`).
-
-### Form metadata
-
-- `title` / `subtitle`: adds a typographic header above the form.
-- `description`: used as a fallback subtitle when present.
-- `form.className`: append additional classes to the `<form>` element.
-
-These metadata fields work alongside the default theme so you can quickly produce branded previews.
-
-### Submit callback
-
-To embed an async submit workflow (disabled by default), add a `submit` object to the form definition. The generator will inline a lightweight script that gathers all field values, validates required inputs, merges your `callbackParams`, and posts them to `callbackUrl` as JSON.
-
-```jsonc
-{
-  "actions": [
-    {
-      "label": "确认提交",
-      "primary": true,
-      "htmlAttributes": { "id": "submit-btn" }
-    }
-  ],
-  "submit": {
-    "callbackUrl": "https://api.example.com/form/submit",
-    "callbackParams": { "operate_type": "task_execute" },
-    "buttonSelector": "#submit-btn",
-    "pendingText": "Submitting...",
-    "successText": "Done",
-    "failureText": "Retry",
-    "validationMessagePrefix": "请填写所有必填项："
-  }
-}
-```
-
-By default the script targets `button[type="submit"]`; set `buttonSelector` (and give your button an `id` via `htmlAttributes`) if you need a different selector. The payload sent to `callbackUrl` looks like:
-
-```jsonc
-{
-  "operate_type": "task_execute",
-  "feedback_data": {
-    "user_collect_data": {
-      "form_info": [{ "label": "用户名", "name": "username", "value": "cooper" }]
+2. **创建实例** `POST /form-instances`
+   ```json
+   {
+    "template_slug": "registration-form",
+    "name": "instance-a",
+    "runtime_config": {
+      "submit": {
+        "callback": {
+          "url": "https://example.com/form/callback",
+          "method": "POST",
+          "params": {
+            "task_id": "task_603a1e0ef40b40dd"
+          }
+        },
+        "persistence": {
+          "endpoint": "https://form.example.com/api/submissions",
+          "headers": { "X-Trace": "demo" },
+          "load_on_init": true,
+          "update_text": "更新",
+          "submission_id": "... 可选，指定已有提交记录 ..."
+        }
+      },
+      "html": {
+        "title": "业务方自定义标题"
+      }
     }
   }
-}
+  ```
+
+   同样可以通过可选字段 `id` 指定实例 ID（默认自动生成 9 位小写字母+数字）。
+
+   > 说明：`submit.callback` 与 `submit.persistence` 是提交配置的唯一入口，参数均使用 snake_case（例如 `callback.url`、`callback.params`）。
+
+   返回的 `id` 即实例 ID。
+
+3. **访问时实时渲染** `GET /forms/{instance_id}/view`
+
+   页面在浏览器打开后会：
+   - 自动向 `GET /forms/{instance_id}/submissions` 拉取最近一次提交（可通过 `submission_id` 查询指定记录），并把 `payload.values` 回填到表单。
+   - 默认显示“提交/重置”按钮；如果存在历史记录，提交按钮会切换为“更新”。
+
+4. **确认提交/回调**
+   - 点击“提交”后，脚本先 `POST /forms/{instance_id}/submissions` 写入或更新 `form_submissions`（字段包含 `payload`、`status`、`callback_status` 等）。
+   - 若定义了 `submit.callback.url`，保存成功后再请求回调；回调成功会把记录更新成 `status=completed`、`callback_status=success`，失败则写入 `status=failed` 并保留错误信息。默认提示文案均为中文（“提交中…/提交成功/提交失败”）。
+   - 也可以手动调用 `GET /forms/{instance_id}/submissions?submission_id=<submission_id>` 查询指定提交记录。
+
+## 模块概览
+
+- `src/antd_to_html/config.py`：环境变量 & 配置。
+- `src/antd_to_html/db.py`：psycopg 连接池与查询工具。
+- `src/antd_to_html/schema_validator.py`：AntD JSON 校验。
+- `src/antd_to_html/render.py` / `submit_script.py`：HTML 渲染与提交脚本。
+- `src/antd_to_html/models.py`：Pydantic 请求/响应模型。
+- `src/antd_to_html/repositories.py`：模板/实例/提交的数据库读写。
+- `src/antd_to_html/api/`：FastAPI 路由（模板、实例、运行时）。
+- `src/antd_to_html/app.py`：应用工厂。
+
+数据库结构详见 `schema.sql`，包含：
+- `form_templates`
+- `form_instances`
+- `form_submissions`
+
+## 直接生成 HTML
+
+无需启动服务时，可以直接调用：
+```python
+from antd_to_html.render import convert_antd_form_to_html
+
+html = convert_antd_form_to_html(definition, options={"html": {"title": "Demo"}})
 ```
 
-Use `idleText`, `pendingText`, `successText`, and `failureText` to control the button copy across submit states. Custom headers (for example tokens) can be set through `submit.headers`.
+## 测试
+
+```bash
+pytest
+```
+
+要快速验证服务端 CRUD 链路，可以先启动 API 服务，再执行：
+
+```bash
+python scripts/run_crud_tests.py
+```
+
+该脚本会自动创建/读取/更新/删除模板与实例数据，并在最后清理测试产生的记录。
+
+## 环境变量样例
+
+```
+PG_HOST=192.168.110.23
+PG_PORT=5433
+PG_DATABASE=form
+PG_USER=postgres
+PG_PASSWORD=example
+```

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>注册表单</title>
+  <title>注册表单2</title>
   <style>
 :root {
   color-scheme: light;
@@ -379,7 +379,7 @@ button:disabled {
     </div>
   </div>
 </div>
-<div class="form-row">
+      <div class="form-row">
   <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
     <div class="form-item">
       <label class="form-label" for="password">登录密码<span class="required-asterisk">*</span></label>
@@ -390,7 +390,7 @@ button:disabled {
     </div>
   </div>
 </div>
-<div class="form-row">
+      <div class="form-row">
   <div class="form-col" style="flex: 0 0 50%; max-width: 50%">
     <div class="form-item">
       <label class="form-label" for="country">所在国家/地区<span class="required-asterisk">*</span></label>
@@ -405,7 +405,7 @@ button:disabled {
     </div>
   </div>
 </div>
-<div class="form-row">
+      <div class="form-row">
   <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
     <div class="form-item">
       <label class="form-label" for="subscription">订阅类型</label>
@@ -416,7 +416,7 @@ button:disabled {
     </div>
   </div>
 </div>
-<div class="form-row">
+      <div class="form-row">
   <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
     <div class="form-item">
       <label class="form-label" for="contacts">紧急联系人</label>
@@ -442,7 +442,7 @@ button:disabled {
     </div>
   </div>
 </div>
-<div class="form-row">
+      <div class="form-row">
   <div class="form-col" style="flex: 0 0 100%; max-width: 100%">
     <div class="form-item">
       <label class="form-label" for="agreement">阅读并同意服务条款<span class="required-asterisk">*</span></label>
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <script>
 (function() {
-  var CONFIG = {"callbackUrl":"{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit","method":"POST","callbackParams":{"operate_type":"task_execute","thread_id":"{{ thread_id }}","plan_instance_id":"{{ plan_instance_id }}","node_id":"{{ node_id }}","exec_run_id":"{{ exec_run_id }}"},"headers":{"Accept":"application/json, text/x-json","Content-Type":"application/json"},"buttonSelector":"#submit-btn","idleText":"确认提交","pendingText":"提交中...","successText":"已提交","failureText":"提交失败","errorClass":"field-error","validationMessagePrefix":"请填写所有必填项："};
+  var CONFIG = {"callback_url":"{{ V5_GATEWAY_SERVER }}/super-v5/api/v1/node/callback/submit","callback_params":{"operate_type":"task_execute","thread_id":"{{ thread_id }}","plan_instance_id":"{{ plan_instance_id }}","node_id":"{{ node_id }}","exec_run_id":"{{ exec_run_id }}"}, "method":"POST","headers":{"Accept":"application/json, text/x-json","Content-Type":"application/json"},"buttonSelector":"#submit-btn","idleText":"\u786e\u8ba4\u63d0\u4ea4","pendingText":"\u63d0\u4ea4\u4e2d...","successText":"\u5df2\u63d0\u4ea4","failureText":"\u63d0\u4ea4\u5931\u8d25","errorClass":"field-error","validationMessagePrefix":"\u8bf7\u586b\u5199\u6240\u6709\u5fc5\u586b\u9879\uff1a"};
 
   function ready(fn) {
     if (document.readyState === 'loading') {
@@ -791,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildRequestPayload(fields) {
-    var base = Object.assign({}, CONFIG.callbackParams || {});
+    var base = Object.assign({}, (CONFIG.callback_params || {}));
     base.feedback_data = { user_collect_data: collectPayload(fields) };
     return base;
   }
@@ -839,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       var payload = buildRequestPayload(fields);
 
-      fetch(CONFIG.callbackUrl, {
+      fetch(CONFIG.callback_url, {
         method: CONFIG.method,
         headers: CONFIG.headers,
         body: JSON.stringify(payload)
