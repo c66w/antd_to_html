@@ -96,6 +96,13 @@ def preview_form_template(identifier: str) -> Response:
   else:
     html_options["title"] = "表单模板 · 预览"
 
+  slug = template.get("slug")
+  if slug and not isinstance(html_options.get("contextBanner"), Mapping):
+    html_options["contextBanner"] = {
+      "label": "模板slug标识",
+      "value": slug,
+    }
+
   html = convert_antd_form_to_html(preview_definition, options={"html": html_options})
   html = _inject_preview_chrome(html)
   return Response(content=html, media_type="text/html; charset=utf-8")

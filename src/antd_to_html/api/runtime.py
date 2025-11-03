@@ -86,6 +86,12 @@ def merge_definition_with_runtime(template: dict, runtime_config: dict, instance
   if isinstance(html_overrides, dict):
     html_options.update(html_overrides)
 
+  if not isinstance(html_options.get("contextBanner"), dict):
+    html_options["contextBanner"] = {
+      "label": "表单实例ID",
+      "value": instance_id,
+    }
+
   submit_config = definition.setdefault("submit", {})
   submission_runtime = runtime_config.get("submission") or {}
   _normalize_submit_config(submit_config, submission_runtime)

@@ -56,6 +56,37 @@ body {
   box-shadow: 0 40px 90px -48px rgba(22, 44, 90, 0.35);
   overflow: hidden;
 }
+.form-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 36px;
+  font-size: 15px;
+  background: rgba(22, 119, 255, 0.08);
+  border-bottom: 1px solid rgba(22, 119, 255, 0.12);
+  color: var(--text-secondary);
+}
+.form-context-label { font-weight: 600; color: var(--primary-color); }
+.form-context-value {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 16px;
+  color: var(--text-color);
+  word-break: break-all;
+}
+.form-context-copy {
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 119, 255, 0.35);
+  background: rgba(22, 119, 255, 0.12);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.form-context-copy:hover {
+  background: rgba(22, 119, 255, 0.16);
+  border-color: rgba(22, 119, 255, 0.45);
+}
 .generated-form {
   padding: 40px 48px;
   display: block;
@@ -233,6 +264,52 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 """.strip()
 
+CONTEXT_COPY_SCRIPT = """
+document.addEventListener('click', event => {
+  const trigger = event.target.closest('[data-copy-text]');
+  if (!trigger) return;
+  const text = trigger.dataset.copyText || '';
+  if (!text) return;
+
+  const original = trigger.dataset.copyLabel || trigger.textContent || '';
+  const successLabel = trigger.dataset.copySuccess || '已复制';
+  const failureLabel = trigger.dataset.copyFailure || '复制失败';
+  const reset = () => {
+    trigger.disabled = false;
+    trigger.textContent = original;
+  };
+  const show = (label, delay = 1500) => {
+    trigger.textContent = label;
+    setTimeout(reset, delay);
+  };
+
+  trigger.disabled = true;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => show(successLabel))
+      .catch(() => show(failureLabel, 1800));
+  } else {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      show(ok ? successLabel : failureLabel, ok ? 1500 : 1800);
+    } catch (err) {
+      document.body.removeChild(textarea);
+      show(failureLabel, 1800);
+    }
+  }
+});
+""".strip()
+
 DEFAULT_SPAN = 24
 
 
@@ -259,6 +336,22 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
   header = render_form_header(definition)
   actions_markup = default_actions()
 
+  context_banner = ""
+  banner_config = html_options.get("contextBanner")
+  context_banner_enabled = False
+  if isinstance(banner_config, Mapping):
+    label = banner_config.get("label")
+    value = banner_config.get("value")
+    if label and value:
+      context_banner_enabled = True
+      context_banner = (
+        '<div class="form-context-banner">'
+        f'<span class="form-context-label">{escape_html(label)}：</span>'
+        f'<span class="form-context-value">{escape_html(value)}</span>'
+        f'<button type="button" class="form-context-copy" data-copy-text="{escape_html(value)}" data-copy-label="复制" data-copy-success="已复制" data-copy-failure="复制失败">复制</button>'
+        '</div>'
+      )
+
   form_classes = ["generated-form"]
   form_options = definition.get("form") or {}
   if form_options.get("className"):
@@ -282,6 +375,8 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
     scripts.append(FORM_LIST_SCRIPT)
   if definition.get("submit"):
     scripts.append(build_submit_script(definition["submit"]))  # type: ignore[arg-type]
+  if context_banner_enabled:
+    scripts.append(CONTEXT_COPY_SCRIPT)
   script_block = "\n".join(f"<script>\n{script}\n</script>" for script in scripts)
 
   styles = None
@@ -299,6 +394,7 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
 </head>
 <body>
   <div class="form-container">
+    {context_banner}
     <form{form_attr_string}>
       {header}
       {'\n'.join(rendered_items)}
