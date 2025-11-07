@@ -29,7 +29,7 @@ def render_form(instance_id: str) -> Response:
   template = record["template"]
   runtime_config = instance.get("runtime_config") or {}
 
-  definition, html_options = merge_definition_with_runtime(template, runtime_config, instance["id"])
+  definition, html_options = merge_definition_with_runtime(template, runtime_config, instance["slug"])
 
   try:
     html = convert_antd_form_to_html(definition, options={"html": html_options})

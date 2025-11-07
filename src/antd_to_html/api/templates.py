@@ -75,7 +75,7 @@ def read_form_template(identifier: str) -> Template:
 @router.delete("/{identifier}", status_code=204)
 def delete_form_template(identifier: str) -> None:
   template = _get_template_by_identifier(identifier)
-  delete_template_by_id(str(template["id"]))
+  delete_template_by_id(str(template["slug"]))
 
 
 @router.get("/{identifier}/preview", response_class=Response)

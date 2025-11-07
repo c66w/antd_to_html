@@ -384,6 +384,8 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
     styles = html_options.get("styles") or BASE_STYLES
   style_block = f"<style>\n{styles}\n</style>" if styles else ""
 
+  rendered_items_str = "\n".join(rendered_items)
+
   html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -397,7 +399,7 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
     {context_banner}
     <form{form_attr_string}>
       {header}
-      {'\n'.join(rendered_items)}
+      {rendered_items_str}
       <div class="form-actions">
         {actions_markup}
       </div>
@@ -567,7 +569,8 @@ def render_select(item: Mapping[str, Any]) -> str:
     label = option.get("label") or option.get("value") or ""
     option_attrs = attributes_to_string({"value": value, "selected": value in values})
     options_markup.append(f"<option {option_attrs}>{escape_html(label)}</option>")
-  return f"<select {attrs}>\n  {'\\n  '.join(options_markup)}\n</select>"
+  options_str = "\n  ".join(options_markup)
+  return f"<select {attrs}>\n  {options_str}\n</select>"
 
 
 def render_radio_group(item: Mapping[str, Any]) -> str:

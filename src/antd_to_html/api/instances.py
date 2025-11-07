@@ -11,7 +11,6 @@ from ..repositories import (
   RepositoryError,
   create_instance,
   get_instance_with_template,
-  get_template_by_id,
   get_template_by_slug,
 )
 
@@ -21,24 +20,19 @@ logger = logging.getLogger(__name__)
 
 @router.post("", response_model=Instance)
 def create_form_instance(payload: InstanceCreate) -> Instance:
-  template_row = None
-  if payload.template_id:
-    template_row = get_template_by_id(payload.template_id)
-    if not template_row and payload.template_slug:
-      template_row = get_template_by_slug(payload.template_slug)
-  elif payload.template_slug:
-    template_row = get_template_by_slug(payload.template_slug)
+  if not payload.template_slug:
+    raise HTTPException(status_code=400, detail="template_slug is required.")
 
+  template_row = get_template_by_slug(payload.template_slug)
   if not template_row:
     logger.warning(
-      "Template not found when creating instance (template_id=%s, template_slug=%s).",
-      payload.template_id,
+      "Template not found when creating instance (template_slug=%s).",
       payload.template_slug,
     )
     raise HTTPException(status_code=404, detail="Template not found.")
 
   try:
-    row = create_instance(payload, str(template_row["id"]))
+    row = create_instance(payload, str(template_row["slug"]))
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 

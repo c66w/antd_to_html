@@ -186,8 +186,9 @@ def _submission_roundtrip(client: "ApiClient", instance_id: str) -> str:
 
 def _cleanup(client: "ApiClient", instance_id: str, template_id: str) -> None:
   # Remove submission and instance rows directly to allow deleting template via API.
+  # Note: instance_id and template_id are actually slugs in the database
   db.execute("DELETE FROM form_submissions WHERE instance_id = %s", (instance_id,))
-  db.execute("DELETE FROM form_instances WHERE id = %s", (instance_id,))
+  db.execute("DELETE FROM form_instances WHERE slug = %s", (instance_id,))
 
   resp = client.delete(f"/form-templates/{template_id}", timeout=10.0)
   _assert_status(resp, 204, "Delete template")
