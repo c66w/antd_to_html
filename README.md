@@ -105,6 +105,23 @@
    - 若定义了 `submit.callback.url`，保存成功后再请求回调；回调成功会把记录更新成 `status=completed`、`callback_status=success`，失败则写入 `status=failed` 并保留错误信息。默认提示文案均为中文（“提交中…/提交成功/提交失败”）。
    - 也可以手动调用 `GET /forms/{instance_id}/submissions?submission_id=<submission_id>` 查询指定提交记录。
 
+## HTML 页面接口
+
+当只需要保存一段现成的 HTML 并获得可访问的链接时，可以使用新增的 `/pages` 路由，与模板/实例逻辑完全解耦：
+
+- `POST /pages`
+  ```json
+  {
+    "html": "<html><body>Hello</body></html>",
+    "slug": "optional-custom-slug"
+  }
+  ```
+  `slug` 可选；若缺省则自动生成 12 位字符串。接口返回 `{"page_slug": "optional-custom-slug"}`，便于自行拼接访问地址。
+- `GET /pages/{slug}`
+  直接返回存储的 HTML 内容，`Content-Type` 为 `text/html; charset=utf-8`。
+
+该表数据存放在 `html_pages`，与其余业务表完全独立。
+
 ## 模块概览
 
 - `src/antd_to_html/config.py`：环境变量 & 配置。
@@ -113,13 +130,14 @@
 - `src/antd_to_html/render.py` / `submit_script.py`：HTML 渲染与提交脚本。
 - `src/antd_to_html/models.py`：Pydantic 请求/响应模型。
 - `src/antd_to_html/repositories.py`：模板/实例/提交的数据库读写。
-- `src/antd_to_html/api/`：FastAPI 路由（模板、实例、运行时）。
+- `src/antd_to_html/api/`：FastAPI 路由（模板、实例、运行时、HTML 页面）。
 - `src/antd_to_html/app.py`：应用工厂。
 
 数据库结构详见 `schema.sql`，包含：
 - `form_templates`
 - `form_instances`
 - `form_submissions`
+- `html_pages`
 
 ## 直接生成 HTML
 

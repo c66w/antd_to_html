@@ -53,3 +53,10 @@ CREATE TABLE IF NOT EXISTS form_submissions (
 CREATE INDEX IF NOT EXISTS idx_form_templates_slug ON form_templates(slug);
 CREATE INDEX IF NOT EXISTS idx_form_instances_template ON form_instances(template_id);
 CREATE INDEX IF NOT EXISTS idx_form_submissions_instance ON form_submissions(instance_id);
+
+CREATE TABLE IF NOT EXISTS html_pages (
+  slug       TEXT PRIMARY KEY DEFAULT generate_short_id(12),
+  html       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

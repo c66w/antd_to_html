@@ -9,7 +9,7 @@ from psycopg.errors import UniqueViolation
 
 from . import db
 from .ids import generate_short_id
-from .models import InstanceCreate, SubmissionCreate, TemplateCreate
+from .models import InstanceCreate, PageCreate, SubmissionCreate, TemplateCreate
 
 
 class RepositoryError(Exception):
@@ -66,6 +66,28 @@ def get_template_by_slug(slug: str) -> Optional[dict[str, Any]]:
 
 def delete_template_by_id(template_id: str) -> None:
   db.execute("DELETE FROM form_templates WHERE id = %s", (template_id,))
+
+
+def create_html_page(data: PageCreate) -> dict[str, Any]:
+  slug = data.slug or generate_short_id()
+  row = db.execute(
+    """
+    INSERT INTO html_pages (slug, html)
+    VALUES (%s, %s)
+    RETURNING *
+    """,
+    (
+      slug,
+      data.html,
+    ),
+  )
+  if not row:
+    raise RepositoryError("Failed to insert HTML page.")
+  return row
+
+
+def get_html_page(slug: str) -> Optional[dict[str, Any]]:
+  return db.fetch_one("SELECT * FROM html_pages WHERE slug = %s", (slug,))
 
 
 def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
