@@ -142,7 +142,7 @@ def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
   }
 
 
-def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
+def save_submission(instance_slug: str, data: SubmissionCreate) -> dict[str, Any]:
   status = data.status or "draft"
   callback_status = data.callback_status or "idle"
   payload_json = json.dumps(data.payload)
@@ -158,7 +158,7 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
              callback_info = %s::jsonb,
              callback_status = %s,
              updated_at = NOW()
-       WHERE id = %s AND instance_id = %s
+       WHERE id = %s AND instance_slug = %s
        RETURNING *
       """,
       (
@@ -167,15 +167,15 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
         callback_info_json,
         callback_status,
         submission_id,
-        instance_id,
+        instance_slug,
       ),
     )
   else:
     row = db.execute(
       """
-      INSERT INTO form_submissions (instance_id, payload, status, callback_info, callback_status)
+      INSERT INTO form_submissions (instance_slug, payload, status, callback_info, callback_status)
       VALUES (%s, %s::jsonb, %s, %s::jsonb, %s)
-      ON CONFLICT (instance_id)
+      ON CONFLICT (instance_slug)
       DO UPDATE SET
         payload = EXCLUDED.payload,
         status = EXCLUDED.status,
@@ -185,7 +185,7 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
       RETURNING *
       """,
       (
-        instance_id,
+        instance_slug,
         payload_json,
         status,
         callback_info_json,
@@ -199,21 +199,21 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
 
 
 def get_submission(
-  instance_id: str,
+  instance_slug: str,
   submission_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
   if submission_id:
     return db.fetch_one(
-      "SELECT * FROM form_submissions WHERE id = %s AND instance_id = %s",
-      (submission_id, instance_id),
+      "SELECT * FROM form_submissions WHERE id = %s AND instance_slug = %s",
+      (submission_id, instance_slug),
     )
 
   return db.fetch_one(
     """
     SELECT * FROM form_submissions
-    WHERE instance_id = %s
+    WHERE instance_slug = %s
     ORDER BY updated_at DESC
     LIMIT 1
     """,
-    (instance_id,),
+    (instance_slug,),
   )

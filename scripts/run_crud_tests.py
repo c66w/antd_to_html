@@ -88,14 +88,14 @@ def _create_template(client: "ApiClient", slug: str) -> Dict[str, Any]:
   resp = client.post("/form-templates", json=payload, timeout=10.0)
   _assert_status(resp, 200, "Create template")
   data = resp.json()
-  _log("Create template", f"id={data['id']}")
+  _log("Create template", f"slug={data['slug']}")
   return data
 
 
-def _read_template(client: "ApiClient", template_id: str, slug: str) -> None:
-  resp = client.get(f"/form-templates/{template_id}", timeout=10.0)
-  _assert_status(resp, 200, "Read template by id")
-  _log("Read template by id")
+def _read_template(client: "ApiClient", template_slug: str, slug: str) -> None:
+  resp = client.get(f"/form-templates/{template_slug}", timeout=10.0)
+  _assert_status(resp, 200, "Read template by slug")
+  _log("Read template by slug")
 
   resp = client.get(f"/form-templates/{slug}", timeout=10.0)
   _assert_status(resp, 200, "Read template by slug")
@@ -120,7 +120,7 @@ def _create_instance(client: "ApiClient", slug: str) -> Dict[str, Any]:
   resp = client.post("/form-instances", json=payload, timeout=10.0)
   _assert_status(resp, 200, "Create instance")
   data = resp.json()
-  _log("Create instance", f"id={data['id']}")
+  _log("Create instance", f"slug={data['slug']}")
   return data
 
 
@@ -184,17 +184,17 @@ def _submission_roundtrip(client: "ApiClient", instance_id: str) -> str:
   return submission_id
 
 
-def _cleanup(client: "ApiClient", instance_id: str, template_id: str) -> None:
+def _cleanup(client: "ApiClient", instance_slug: str, template_slug: str) -> None:
   # Remove submission and instance rows directly to allow deleting template via API.
-  # Note: instance_id and template_id are actually slugs in the database
-  db.execute("DELETE FROM form_submissions WHERE instance_id = %s", (instance_id,))
-  db.execute("DELETE FROM form_instances WHERE slug = %s", (instance_id,))
+  # Note: instance_slug and template_slug are slugs in the database
+  db.execute("DELETE FROM form_submissions WHERE instance_slug = %s", (instance_slug,))
+  db.execute("DELETE FROM form_instances WHERE slug = %s", (instance_slug,))
 
-  resp = client.delete(f"/form-templates/{template_id}", timeout=10.0)
+  resp = client.delete(f"/form-templates/{template_slug}", timeout=10.0)
   _assert_status(resp, 204, "Delete template")
   _log("Delete template via API")
 
-  resp = client.get(f"/form-templates/{template_id}", timeout=10.0)
+  resp = client.get(f"/form-templates/{template_slug}", timeout=10.0)
   if resp.status_code != 404:
     raise TestFailure("Template was not deleted.")
   _log("Verify template deleted")
@@ -207,16 +207,16 @@ def main() -> int:
   slug = f"crud-test-{int(time.time())}"
   with ApiClient(BASE_URL) as client:
     template = _create_template(client, slug)
-    template_id = template["id"]
-    _read_template(client, template_id, slug)
+    template_slug = template["slug"]
+    _read_template(client, template_slug, slug)
 
     instance = _create_instance(client, slug)
-    instance_id = instance["id"]
-    _read_instance(client, instance_id)
+    instance_slug = instance["slug"]
+    _read_instance(client, instance_slug)
 
-    _render_runtime(client, instance_id)
-    _submission_roundtrip(client, instance_id)
-    _cleanup(client, instance_id, template_id)
+    _render_runtime(client, instance_slug)
+    _submission_roundtrip(client, instance_slug)
+    _cleanup(client, instance_slug, template_slug)
   _log("CRUD smoke test completed successfully")
   return 0
 

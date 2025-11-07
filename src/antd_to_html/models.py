@@ -68,6 +68,6 @@ class SubmissionCreate(SubmissionBase):
 
 class Submission(SubmissionBase):
   id: str
-  instance_id: str
+  instance_slug: str
   submitted_at: datetime
   updated_at: datetime

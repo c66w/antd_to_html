@@ -19,9 +19,9 @@ from ..repositories import (
 router = APIRouter(tags=["runtime"])
 
 
-@router.get("/forms/{instance_id}/view", response_class=Response)
-def render_form(instance_id: str) -> Response:
-  record = get_instance_with_template(instance_id)
+@router.get("/forms/{instance_slug}/view", response_class=Response)
+def render_form(instance_slug: str) -> Response:
+  record = get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
@@ -29,7 +29,7 @@ def render_form(instance_id: str) -> Response:
   template = record["template"]
   runtime_config = instance.get("runtime_config") or {}
 
-  definition, html_options = merge_definition_with_runtime(template, runtime_config, instance["slug"])
+  definition, html_options = merge_definition_with_runtime(template, runtime_config, instance_slug)
 
   try:
     html = convert_antd_form_to_html(definition, options={"html": html_options})
@@ -40,9 +40,9 @@ def render_form(instance_id: str) -> Response:
   return Response(content=html, media_type="text/html; charset=utf-8")
 
 
-@router.post("/forms/{instance_id}/submissions", response_model=Submission)
-def submit_form(instance_id: str, payload: SubmissionCreate) -> Submission:
-  record = get_instance_with_template(instance_id)
+@router.post("/forms/{instance_slug}/submissions", response_model=Submission)
+def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
+  record = get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
@@ -50,27 +50,27 @@ def submit_form(instance_id: str, payload: SubmissionCreate) -> Submission:
     payload.status = "submitted"
 
   try:
-    row = save_submission(instance_id, payload)
+    row = save_submission(instance_slug, payload)
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 
   return Submission.model_validate(row)
 
 
-@router.get("/forms/{instance_id}/submissions", response_model=Submission)
-def load_submission(instance_id: str, submission_id: str | None = None) -> Submission:
-  instance = get_instance(instance_id)
+@router.get("/forms/{instance_slug}/submissions", response_model=Submission)
+def load_submission(instance_slug: str, submission_id: str | None = None) -> Submission:
+  instance = get_instance(instance_slug)
   if not instance:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
-  row = get_submission(instance_id, submission_id=submission_id)
+  row = get_submission(instance_slug, submission_id=submission_id)
   if not row:
     raise HTTPException(status_code=404, detail="Submission not found.")
 
   return Submission.model_validate(row)
 
 
-def merge_definition_with_runtime(template: dict, runtime_config: dict, instance_id: str) -> tuple[dict, dict]:
+def merge_definition_with_runtime(template: dict, runtime_config: dict, instance_slug: str) -> tuple[dict, dict]:
   definition = deepcopy(template.get("definition") or {})
   html_options = deepcopy(template.get("html_options") or {})
 
@@ -89,7 +89,7 @@ def merge_definition_with_runtime(template: dict, runtime_config: dict, instance
   if not isinstance(html_options.get("contextBanner"), dict):
     html_options["contextBanner"] = {
       "label": "表单实例ID",
-      "value": instance_id,
+      "value": instance_slug,
     }
 
   submit_config = definition.setdefault("submit", {})
@@ -102,7 +102,7 @@ def merge_definition_with_runtime(template: dict, runtime_config: dict, instance
     elif submission_runtime.get("endpoint"):
       submit_config["submissionEndpoint"] = submission_runtime["endpoint"]
     else:
-      submit_config["submissionEndpoint"] = f"/forms/{instance_id}/submissions"
+      submit_config["submissionEndpoint"] = f"/forms/{instance_slug}/submissions"
 
   if "submissionHeaders" not in submit_config and submission_runtime.get("headers"):
     submit_config["submissionHeaders"] = submission_runtime["headers"]

@@ -39,16 +39,16 @@ CREATE TABLE IF NOT EXISTS form_instances (
 
 CREATE TABLE IF NOT EXISTS form_submissions (
   id             TEXT PRIMARY KEY DEFAULT generate_short_id(12),
-  instance_id    TEXT NOT NULL REFERENCES form_instances(slug) ON DELETE CASCADE,
+  instance_slug    TEXT NOT NULL REFERENCES form_instances(slug) ON DELETE CASCADE,
   submitted_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   payload        JSONB NOT NULL,
   status         TEXT NOT NULL DEFAULT 'draft',
   callback_status TEXT NOT NULL DEFAULT 'idle',
   callback_info  JSONB,
-  CONSTRAINT form_submissions_instance_unique UNIQUE (instance_id)
+  CONSTRAINT form_submissions_instance_unique UNIQUE (instance_slug)
 );
 
 
 CREATE INDEX IF NOT EXISTS idx_form_instances_template ON form_instances(template_slug);
-CREATE INDEX IF NOT EXISTS idx_form_submissions_instance ON form_submissions(instance_id);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_instance ON form_submissions(instance_slug);

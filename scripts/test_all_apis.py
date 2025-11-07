@@ -218,7 +218,7 @@ def test_create_submission(client: "ApiClient", instance_slug: str) -> Dict[str,
   _assert_status(resp, 200, "创建提交")
   data = resp.json()
   assert "id" in data, "响应应包含 id 字段（提交记录的主键）"
-  assert data["instance_id"] == instance_slug, "instance_id 应匹配"
+  assert data["instance_slug"] == instance_slug, "instance_slug 应匹配"
   assert data["status"] == "submitted", "status 应匹配"
   _log("创建提交成功", f"id={data['id']}")
   return data
@@ -272,7 +272,7 @@ def test_get_latest_submission(client: "ApiClient", instance_slug: str) -> None:
   _assert_status(resp, 200, "获取最新提交")
   data = resp.json()
   assert "id" in data, "响应应包含 id 字段"
-  assert data["instance_id"] == instance_slug, "instance_id 应匹配"
+  assert data["instance_slug"] == instance_slug, "instance_slug 应匹配"
   _log("获取最新提交成功", f"id={data['id']}")
 
 
@@ -296,7 +296,7 @@ def cleanup(client: "ApiClient", instance_slug: str) -> None:
   """清理测试数据"""
   print("\n=== 清理测试数据 ===")
   try:
-    db.execute("DELETE FROM form_submissions WHERE instance_id = %s", (instance_slug,))
+    db.execute("DELETE FROM form_submissions WHERE instance_slug = %s", (instance_slug,))
     db.execute("DELETE FROM form_instances WHERE slug = %s", (instance_slug,))
     _log("清理完成")
   except Exception as e:
