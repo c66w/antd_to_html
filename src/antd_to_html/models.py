@@ -8,6 +8,24 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+class PageCreate(BaseModel):
+  model_config = ConfigDict(extra="ignore")
+
+  slug: Optional[str] = None
+  html: str
+
+
+class Page(BaseModel):
+  slug: str
+  html: str
+  created_at: datetime
+  updated_at: datetime
+
+
+class PageResponse(BaseModel):
+  page_slug: str
+
+
 class TemplateCreate(BaseModel):
   model_config = ConfigDict(extra="ignore")
 

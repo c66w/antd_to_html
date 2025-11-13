@@ -19,6 +19,10 @@ class Settings:
   pg_database: str = "form"
   pg_user: str = "postgres"
   pg_password: str = ""
+  es_endpoint: str = "http://localhost:9200"
+  es_username: str = ""
+  es_password: str = ""
+  es_index: str = "html_pages"
 
   @property
   def pg_dsn(self) -> str:
@@ -38,4 +42,8 @@ def get_settings() -> Settings:
     pg_database=os.getenv("PG_DATABASE", Settings.pg_database),
     pg_user=os.getenv("PG_USER", Settings.pg_user),
     pg_password=os.getenv("PG_PASSWORD", Settings.pg_password),
+    es_endpoint=os.getenv("ES_ENDPOINT", Settings.es_endpoint),
+    es_username=os.getenv("ES_USERNAME", Settings.es_username),
+    es_password=os.getenv("ES_PASSWORD", Settings.es_password),
+    es_index=os.getenv("ES_INDEX", Settings.es_index),
   )
