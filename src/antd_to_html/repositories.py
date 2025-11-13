@@ -31,17 +31,15 @@ class PageConflictError(RepositoryError):
 
 
 def create_template(data: TemplateCreate) -> dict[str, Any]:
-  template_id = data.id or generate_short_id()
-  slug = data.slug or template_id
+  slug = data.slug or generate_short_id()
   try:
     row = db.execute(
       """
-      INSERT INTO form_templates (id, slug, title, description, theme, definition, html_options, version)
-      VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s)
+      INSERT INTO form_templates (slug, title, description, theme, definition, html_options, version)
+      VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s)
       RETURNING *
       """,
       (
-        template_id,
         slug,
         data.title,
         data.description,
@@ -53,10 +51,8 @@ def create_template(data: TemplateCreate) -> dict[str, Any]:
     )
   except UniqueViolation as exc:
     constraint = getattr(getattr(exc, "diag", None), "constraint_name", "") or ""
-    if constraint.endswith("slug_key"):
+    if constraint.endswith("slug_key") or constraint.endswith("pkey"):
       message = "Template slug already exists."
-    elif constraint.endswith("pkey"):
-      message = "Template id already exists."
     else:
       message = "Template already exists."
     raise TemplateConflictError(message) from exc
@@ -67,7 +63,8 @@ def create_template(data: TemplateCreate) -> dict[str, Any]:
 
 
 def get_template_by_id(template_id: str) -> Optional[dict[str, Any]]:
-  return db.fetch_one("SELECT * FROM form_templates WHERE id = %s", (template_id,))
+  # For backward compatibility, treat template_id as slug
+  return db.fetch_one("SELECT * FROM form_templates WHERE slug = %s", (template_id,))
 
 
 def get_template_by_slug(slug: str) -> Optional[dict[str, Any]]:
@@ -75,7 +72,8 @@ def get_template_by_slug(slug: str) -> Optional[dict[str, Any]]:
 
 
 def delete_template_by_id(template_id: str) -> None:
-  db.execute("DELETE FROM form_templates WHERE id = %s", (template_id,))
+  # For backward compatibility, treat template_id as slug
+  db.execute("DELETE FROM form_templates WHERE slug = %s", (template_id,))
 
 
 async def create_html_page(data: PageCreate) -> dict[str, Any]:
@@ -129,13 +127,13 @@ def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
   instance_id = data.id or generate_short_id()
   row = db.execute(
     """
-    INSERT INTO form_instances (id, template_id, name, runtime_config)
+    INSERT INTO form_instances (slug, template_slug, name, runtime_config)
     VALUES (%s, %s, %s, %s::jsonb)
     RETURNING *
     """,
     (
-      instance_id,
-      template_id,
+      instance_slug,
+      template_slug,
       data.name,
       json.dumps(data.runtime_config),
     ),
@@ -146,20 +144,21 @@ def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
 
 
 def get_instance(instance_id: str) -> Optional[dict[str, Any]]:
-  return db.fetch_one("SELECT * FROM form_instances WHERE id = %s", (instance_id,))
+  # For backward compatibility, treat instance_id as slug
+  return db.fetch_one("SELECT * FROM form_instances WHERE slug = %s", (instance_id,))
 
 
 def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
+  # For backward compatibility, treat instance_id as slug
   row = db.fetch_one(
     """
     SELECT
-      i.id AS instance_id,
-      i.template_id,
+      i.slug AS instance_slug,
+      i.template_slug,
       i.name AS instance_name,
       i.runtime_config,
       i.created_at AS instance_created_at,
       i.updated_at AS instance_updated_at,
-      t.id AS template_id,
       t.slug AS template_slug,
       t.title AS template_title,
       t.description AS template_description,
@@ -170,8 +169,8 @@ def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
       t.created_at AS template_created_at,
       t.updated_at AS template_updated_at
     FROM form_instances i
-    JOIN form_templates t ON t.id = i.template_id
-    WHERE i.id = %s
+    JOIN form_templates t ON t.slug = i.template_slug
+    WHERE i.slug = %s
     """,
     (instance_id,),
   )
@@ -179,15 +178,14 @@ def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
     return None
   return {
     "instance": {
-      "id": row["instance_id"],
-      "template_id": row["template_id"],
+      "slug": row["instance_slug"],
+      "template_slug": row["template_slug"],
       "name": row["instance_name"],
       "runtime_config": row["runtime_config"],
       "created_at": row["instance_created_at"],
       "updated_at": row["instance_updated_at"],
     },
     "template": {
-      "id": row["template_id"],
       "slug": row["template_slug"],
       "title": row["template_title"],
       "description": row["template_description"],
@@ -201,7 +199,7 @@ def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
   }
 
 
-def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
+def save_submission(instance_slug: str, data: SubmissionCreate) -> dict[str, Any]:
   status = data.status or "draft"
   callback_status = data.callback_status or "idle"
   payload_json = json.dumps(data.payload)
@@ -217,7 +215,7 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
              callback_info = %s::jsonb,
              callback_status = %s,
              updated_at = NOW()
-       WHERE id = %s AND instance_id = %s
+       WHERE id = %s AND instance_slug = %s
        RETURNING *
       """,
       (
@@ -226,15 +224,15 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
         callback_info_json,
         callback_status,
         submission_id,
-        instance_id,
+        instance_slug,
       ),
     )
   else:
     row = db.execute(
       """
-      INSERT INTO form_submissions (instance_id, payload, status, callback_info, callback_status)
+      INSERT INTO form_submissions (instance_slug, payload, status, callback_info, callback_status)
       VALUES (%s, %s::jsonb, %s, %s::jsonb, %s)
-      ON CONFLICT (instance_id)
+      ON CONFLICT (instance_slug)
       DO UPDATE SET
         payload = EXCLUDED.payload,
         status = EXCLUDED.status,
@@ -244,7 +242,7 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
       RETURNING *
       """,
       (
-        instance_id,
+        instance_slug,
         payload_json,
         status,
         callback_info_json,
@@ -258,21 +256,21 @@ def save_submission(instance_id: str, data: SubmissionCreate) -> dict[str, Any]:
 
 
 def get_submission(
-  instance_id: str,
+  instance_slug: str,
   submission_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
   if submission_id:
     return db.fetch_one(
-      "SELECT * FROM form_submissions WHERE id = %s AND instance_id = %s",
-      (submission_id, instance_id),
+      "SELECT * FROM form_submissions WHERE id = %s AND instance_slug = %s",
+      (submission_id, instance_slug),
     )
 
   return db.fetch_one(
     """
     SELECT * FROM form_submissions
-    WHERE instance_id = %s
+    WHERE instance_slug = %s
     ORDER BY updated_at DESC
     LIMIT 1
     """,
-    (instance_id,),
+    (instance_slug,),
   )

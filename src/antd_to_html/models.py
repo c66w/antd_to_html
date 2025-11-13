@@ -29,7 +29,6 @@ class PageResponse(BaseModel):
 class TemplateCreate(BaseModel):
   model_config = ConfigDict(extra="ignore")
 
-  id: Optional[str] = None
   slug: Optional[str] = None
   title: str
   description: Optional[str] = None
@@ -40,7 +39,7 @@ class TemplateCreate(BaseModel):
 
 
 class Template(TemplateCreate):
-  id: str
+  slug: str
   created_at: datetime
   updated_at: datetime
 
@@ -48,22 +47,21 @@ class Template(TemplateCreate):
 class InstanceCreate(BaseModel):
   model_config = ConfigDict(extra="ignore")
 
-  id: Optional[str] = None
-  template_id: Optional[str] = None
+  slug: Optional[str] = None
   template_slug: Optional[str] = None
   name: Optional[str] = None
   runtime_config: dict[str, Any] = Field(default_factory=dict)
 
   @model_validator(mode="after")
   def ensure_template_reference(self):
-    if not self.template_id and not self.template_slug:
-      raise ValueError("template_id or template_slug is required.")
+    if not self.template_slug:
+      raise ValueError("template_slug is required.")
     return self
 
 
 class Instance(InstanceCreate):
-  id: str
-  template_id: str
+  slug: str
+  template_slug: str
   created_at: datetime
   updated_at: datetime
 
@@ -88,6 +86,6 @@ class SubmissionCreate(SubmissionBase):
 
 class Submission(SubmissionBase):
   id: str
-  instance_id: str
+  instance_slug: str
   submitted_at: datetime
   updated_at: datetime
