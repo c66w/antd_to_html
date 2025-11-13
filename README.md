@@ -116,11 +116,11 @@
     "slug": "optional-custom-slug"
   }
   ```
-  `slug` 可选；若缺省则自动生成 12 位字符串。接口返回 `{"page_slug": "optional-custom-slug"}`，便于自行拼接访问地址。
+  `slug` 可选；若缺省则自动生成 12 位字符串。接口返回 `{"page_slug": "optional-custom-slug"}`，便于自行拼接访问地址。数据会存储到 Elasticsearch（默认索引 `html_pages`，可由 `ES_INDEX` 环境变量修改）。
 - `GET /pages/{slug}`
   直接返回存储的 HTML 内容，`Content-Type` 为 `text/html; charset=utf-8`。
 
-该表数据存放在 `html_pages`，与其余业务表完全独立。
+数据存放在 Elasticsearch 索引 `html_pages`（或你在 `ES_INDEX` 中指定的名字），与其余业务表完全独立。
 
 ## 模块概览
 
@@ -131,13 +131,13 @@
 - `src/antd_to_html/models.py`：Pydantic 请求/响应模型。
 - `src/antd_to_html/repositories.py`：模板/实例/提交的数据库读写。
 - `src/antd_to_html/api/`：FastAPI 路由（模板、实例、运行时、HTML 页面）。
+- `src/antd_to_html/es.py`：Elasticsearch 客户端管理。
 - `src/antd_to_html/app.py`：应用工厂。
 
 数据库结构详见 `schema.sql`，包含：
 - `form_templates`
 - `form_instances`
 - `form_submissions`
-- `html_pages`
 
 ## 直接生成 HTML
 
@@ -170,4 +170,8 @@ PG_PORT=5433
 PG_DATABASE=form
 PG_USER=postgres
 PG_PASSWORD=example
+ES_ENDPOINT=https://example.es.aliyuncs.com:9200
+ES_USERNAME=elastic
+ES_PASSWORD=changeme
+ES_INDEX=html_pages
 ```

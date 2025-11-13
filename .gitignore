@@ -1,3 +1,15 @@
 .*
 !.gitignore
 !.dockerignore
+
+# 忽略 Python 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 你还可以额外加上这些通用规则
+.env
+.vscode/
+.idea/
+.DS_Store

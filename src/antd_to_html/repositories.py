@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import json
+import logging
+from datetime import datetime, timezone
 from typing import Any, Optional
 
+from elasticsearch import ConflictError, NotFoundError, TransportError
 from psycopg.errors import UniqueViolation
 
-from . import db
+from . import db, es
+from .config import get_settings
 from .ids import generate_short_id
 from .models import InstanceCreate, PageCreate, SubmissionCreate, TemplateCreate
+
+logger = logging.getLogger(__name__)
 
 
 class RepositoryError(Exception):
@@ -18,6 +24,10 @@ class RepositoryError(Exception):
 
 class TemplateConflictError(RepositoryError):
   """Raised when a template slug already exists."""
+
+
+class PageConflictError(RepositoryError):
+  """Raised when a page slug already exists."""
 
 
 def create_template(data: TemplateCreate) -> dict[str, Any]:
@@ -68,26 +78,51 @@ def delete_template_by_id(template_id: str) -> None:
   db.execute("DELETE FROM form_templates WHERE id = %s", (template_id,))
 
 
-def create_html_page(data: PageCreate) -> dict[str, Any]:
+async def create_html_page(data: PageCreate) -> dict[str, Any]:
   slug = data.slug or generate_short_id()
-  row = db.execute(
-    """
-    INSERT INTO html_pages (slug, html)
-    VALUES (%s, %s)
-    RETURNING *
-    """,
-    (
-      slug,
-      data.html,
-    ),
-  )
-  if not row:
-    raise RepositoryError("Failed to insert HTML page.")
-  return row
+  client = es.get_async_client()
+  settings = get_settings()
+  now = datetime.now(timezone.utc).isoformat()
+  document = {
+    "slug": slug,
+    "html": data.html,
+    "created_at": now,
+    "updated_at": now,
+  }
+  try:
+    await client.create(index=settings.es_index, id=slug, document=document)
+  except ConflictError as exc:
+    logger.warning("Attempted to create duplicate HTML page slug=%s", slug)
+    raise PageConflictError("Page slug already exists.") from exc
+  except TransportError as exc:
+    logger.exception("Elasticsearch create failed for slug=%s", slug)
+    raise RepositoryError(f"Failed to insert HTML page: {exc}") from exc
+
+  logger.debug("Stored HTML page in Elasticsearch index=%s slug=%s", settings.es_index, slug)
+  return document
 
 
-def get_html_page(slug: str) -> Optional[dict[str, Any]]:
-  return db.fetch_one("SELECT * FROM html_pages WHERE slug = %s", (slug,))
+async def get_html_page(slug: str) -> Optional[dict[str, Any]]:
+  client = es.get_async_client()
+  settings = get_settings()
+  try:
+    response = await client.get(index=settings.es_index, id=slug)
+  except NotFoundError:
+    logger.info("Elasticsearch page not found slug=%s", slug)
+    return None
+  except TransportError as exc:
+    logger.exception("Elasticsearch get failed for slug=%s", slug)
+    raise RepositoryError(f"Failed to load HTML page: {exc}") from exc
+
+  source = response.get("_source") or {}
+  if not source:
+    return None
+  return {
+    "slug": slug,
+    "html": source.get("html", ""),
+    "created_at": source.get("created_at"),
+    "updated_at": source.get("updated_at"),
+  }
 
 
 def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
