@@ -2,14 +2,32 @@
 !.gitignore
 !.dockerignore
 
-# 忽略 Python 缓存文件
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# 你还可以额外加上这些通用规则
-.env
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE / Editor
 .vscode/
 .idea/
+
+# Mac system files
 .DS_Store
+
+# Logs / temp
+*.log
+*.tmp
+
+# Environment files
+.env
