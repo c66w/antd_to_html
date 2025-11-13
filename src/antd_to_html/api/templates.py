@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Mapping
 
+import logging
 from fastapi import APIRouter, HTTPException, Response
 
 from ..models import Template, TemplateCreate
@@ -20,6 +21,7 @@ from ..repositories import (
 from ..schema_validator import validate_form_definition
 
 router = APIRouter(prefix="/form-templates", tags=["form-templates"])
+logger = logging.getLogger(__name__)
 
 PREVIEW_NOTICE = "预览模式：按钮已禁用，不会提交数据。"
 PREVIEW_STYLES = """
@@ -52,6 +54,14 @@ PREVIEW_BANNER_HTML = (
 
 @router.post("", response_model=Template)
 def create_form_template(payload: TemplateCreate) -> Template:
+  logger.info(
+    "Create template request: slug=%s title=%s version=%s def_keys=%s html_opt_keys=%s",
+    payload.slug,
+    payload.title,
+    payload.version,
+    list((payload.definition or {}).keys()),
+    list((payload.html_options or {}).keys()),
+  )
   errors = validate_form_definition(payload.definition)
   if errors:
     raise HTTPException(status_code=422, detail=errors)
@@ -63,23 +73,31 @@ def create_form_template(payload: TemplateCreate) -> Template:
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-  return Template.model_validate(row)
+  tmpl = Template.model_validate(row)
+  logger.info("Template created: slug=%s title=%s version=%s", tmpl.slug, tmpl.title, tmpl.version)
+  return tmpl
 
 
 @router.get("/{identifier}", response_model=Template)
 def read_form_template(identifier: str) -> Template:
+  logger.info("Read template request: identifier=%s", identifier)
   template = _get_template_by_identifier(identifier)
-  return Template.model_validate(template)
+  tmpl = Template.model_validate(template)
+  logger.info("Returning template: slug=%s version=%s", tmpl.slug, tmpl.version)
+  return tmpl
 
 
 @router.delete("/{identifier}", status_code=204)
 def delete_form_template(identifier: str) -> None:
+  logger.info("Delete template request: identifier=%s", identifier)
   template = _get_template_by_identifier(identifier)
   delete_template_by_id(str(template["slug"]))
+  logger.info("Template deleted: slug=%s", template["slug"]) 
 
 
 @router.get("/{identifier}/preview", response_class=Response)
 def preview_form_template(identifier: str) -> Response:
+  logger.info("Preview template request: identifier=%s", identifier)
   template = _get_template_by_identifier(identifier)
   definition = deepcopy(template.get("definition") or {})
   html_options = deepcopy(template.get("html_options") or {})
@@ -105,6 +123,7 @@ def preview_form_template(identifier: str) -> Response:
 
   html = convert_antd_form_to_html(preview_definition, options={"html": html_options})
   html = _inject_preview_chrome(html)
+  logger.info("Preview generated: slug=%s html_len=%s", template.get("slug"), len(html))
   return Response(content=html, media_type="text/html; charset=utf-8")
 
 

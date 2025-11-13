@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import logging
 
 from fastapi import APIRouter, HTTPException, Response
 
@@ -17,10 +18,12 @@ from ..repositories import (
 )
 
 router = APIRouter(tags=["runtime"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/forms/{instance_slug}/view", response_class=Response)
 def render_form(instance_slug: str) -> Response:
+  logger.info("Render form request: instance_slug=%s", instance_slug)
   record = get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
@@ -37,11 +40,25 @@ def render_form(instance_slug: str) -> Response:
     detail = getattr(exc, "details", None)
     raise HTTPException(status_code=422, detail=detail or str(exc)) from exc
 
+  logger.info(
+    "Rendered form: instance_slug=%s html_len=%s title=%s",
+    instance_slug,
+    len(html),
+    (html_options or {}).get("title"),
+  )
   return Response(content=html, media_type="text/html; charset=utf-8")
 
 
 @router.post("/forms/{instance_slug}/submissions", response_model=Submission)
 def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
+  payload_len = len((payload.payload or {})) if hasattr(payload, "payload") else 0
+  logger.info(
+    "Submit form request: instance_slug=%s status=%s callback_status=%s payload_len=%s",
+    instance_slug,
+    payload.status,
+    payload.callback_status,
+    payload_len,
+  )
   record = get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
@@ -54,11 +71,14 @@ def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-  return Submission.model_validate(row)
+  submission = Submission.model_validate(row)
+  logger.info("Saved submission: id=%s instance_slug=%s status=%s", submission.id, submission.instance_slug, submission.status)
+  return submission
 
 
 @router.get("/forms/{instance_slug}/submissions", response_model=Submission)
 def load_submission(instance_slug: str, submission_id: str | None = None) -> Submission:
+  logger.info("Load submission request: instance_slug=%s submission_id=%s", instance_slug, submission_id)
   instance = get_instance(instance_slug)
   if not instance:
     raise HTTPException(status_code=404, detail="Instance not found.")
@@ -67,7 +87,9 @@ def load_submission(instance_slug: str, submission_id: str | None = None) -> Sub
   if not row:
     raise HTTPException(status_code=404, detail="Submission not found.")
 
-  return Submission.model_validate(row)
+  submission = Submission.model_validate(row)
+  logger.info("Returning submission: id=%s instance_slug=%s status=%s", submission.id, submission.instance_slug, submission.status)
+  return submission
 
 
 def merge_definition_with_runtime(template: dict, runtime_config: dict, instance_slug: str) -> tuple[dict, dict]:

@@ -32,6 +32,12 @@ class PageConflictError(RepositoryError):
 
 def create_template(data: TemplateCreate) -> dict[str, Any]:
   slug = data.slug or generate_short_id()
+  logger.info(
+    "Repo.create_template: slug=%s title=%s version=%s",
+    slug,
+    data.title,
+    data.version,
+  )
   try:
     row = db.execute(
       """
@@ -59,20 +65,24 @@ def create_template(data: TemplateCreate) -> dict[str, Any]:
 
   if not row:
     raise RepositoryError("Failed to insert template.")
+  logger.info("Repo.create_template: created slug=%s", row.get("slug"))
   return row
 
 
 def get_template_by_id(template_id: str) -> Optional[dict[str, Any]]:
   # For backward compatibility, treat template_id as slug
+  logger.debug("Repo.get_template_by_id: %s", template_id)
   return db.fetch_one("SELECT * FROM form_templates WHERE slug = %s", (template_id,))
 
 
 def get_template_by_slug(slug: str) -> Optional[dict[str, Any]]:
+  logger.debug("Repo.get_template_by_slug: %s", slug)
   return db.fetch_one("SELECT * FROM form_templates WHERE slug = %s", (slug,))
 
 
 def delete_template_by_id(template_id: str) -> None:
   # For backward compatibility, treat template_id as slug
+  logger.info("Repo.delete_template_by_id: %s", template_id)
   db.execute("DELETE FROM form_templates WHERE slug = %s", (template_id,))
 
 
@@ -81,6 +91,7 @@ async def create_html_page(data: PageCreate) -> dict[str, Any]:
   client = es.get_async_client()
   settings = get_settings()
   now = datetime.now(timezone.utc).isoformat()
+  logger.info("Repo.create_html_page: slug=%s index=%s html_len=%s", slug, settings.es_index, len(data.html or ""))
   document = {
     "slug": slug,
     "html": data.html,
@@ -103,6 +114,7 @@ async def create_html_page(data: PageCreate) -> dict[str, Any]:
 async def get_html_page(slug: str) -> Optional[dict[str, Any]]:
   client = es.get_async_client()
   settings = get_settings()
+  logger.info("Repo.get_html_page: slug=%s index=%s", slug, settings.es_index)
   try:
     response = await client.get(index=settings.es_index, id=slug)
   except NotFoundError:
@@ -115,6 +127,7 @@ async def get_html_page(slug: str) -> Optional[dict[str, Any]]:
   source = response.get("_source") or {}
   if not source:
     return None
+  logger.info("Repo.get_html_page: found slug=%s html_len=%s", slug, len(source.get("html") or ""))
   return {
     "slug": slug,
     "html": source.get("html", ""),
@@ -124,7 +137,18 @@ async def get_html_page(slug: str) -> Optional[dict[str, Any]]:
 
 
 def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
-  instance_id = data.id or generate_short_id()
+  # Use provided slug or generate a new one
+  instance_slug = data.slug or generate_short_id()
+  # Prefer the explicitly passed template identifier (slug),
+  # fall back to the value in the payload for safety.
+  template_slug = template_id or (data.template_slug or "")
+  logger.info(
+    "Repo.create_instance: instance_slug=%s template_slug=%s name=%s",
+    instance_slug,
+    template_slug,
+    data.name,
+  )
+
   row = db.execute(
     """
     INSERT INTO form_instances (slug, template_slug, name, runtime_config)
@@ -140,16 +164,19 @@ def create_instance(data: InstanceCreate, template_id: str) -> dict[str, Any]:
   )
   if not row:
     raise RepositoryError("Failed to insert instance.")
+  logger.info("Repo.create_instance: created slug=%s", row.get("slug"))
   return row
 
 
 def get_instance(instance_id: str) -> Optional[dict[str, Any]]:
   # For backward compatibility, treat instance_id as slug
+  logger.debug("Repo.get_instance: %s", instance_id)
   return db.fetch_one("SELECT * FROM form_instances WHERE slug = %s", (instance_id,))
 
 
 def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
   # For backward compatibility, treat instance_id as slug
+  logger.debug("Repo.get_instance_with_template: %s", instance_id)
   row = db.fetch_one(
     """
     SELECT
@@ -176,6 +203,7 @@ def get_instance_with_template(instance_id: str) -> Optional[dict[str, Any]]:
   )
   if not row:
     return None
+  logger.debug("Repo.get_instance_with_template: found instance_slug=%s template_slug=%s", row.get("instance_slug"), row.get("template_slug"))
   return {
     "instance": {
       "slug": row["instance_slug"],
@@ -205,6 +233,14 @@ def save_submission(instance_slug: str, data: SubmissionCreate) -> dict[str, Any
   payload_json = json.dumps(data.payload)
   callback_info_json = json.dumps(data.callback_info) if data.callback_info is not None else None
   submission_id = data.submission_id
+  logger.info(
+    "Repo.save_submission: instance_slug=%s submission_id=%s status=%s callback_status=%s payload_len=%s",
+    instance_slug,
+    submission_id,
+    status,
+    callback_status,
+    len(payload_json or ""),
+  )
 
   if submission_id:
     row = db.execute(
@@ -252,6 +288,7 @@ def save_submission(instance_slug: str, data: SubmissionCreate) -> dict[str, Any
 
   if not row:
     raise RepositoryError("Failed to save submission.")
+  logger.info("Repo.save_submission: saved id=%s instance_slug=%s", row.get("id"), row.get("instance_slug"))
   return row
 
 
@@ -260,11 +297,13 @@ def get_submission(
   submission_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
   if submission_id:
+    logger.info("Repo.get_submission: instance_slug=%s submission_id=%s", instance_slug, submission_id)
     return db.fetch_one(
       "SELECT * FROM form_submissions WHERE id = %s AND instance_slug = %s",
       (submission_id, instance_slug),
     )
 
+  logger.info("Repo.get_submission latest: instance_slug=%s", instance_slug)
   return db.fetch_one(
     """
     SELECT * FROM form_submissions
