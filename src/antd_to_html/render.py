@@ -136,6 +136,26 @@ textarea {
   background-color: #fff;
   color: var(--text-color);
 }
+/* Do not stretch radios/checkboxes like text inputs */
+input[type="radio"],
+input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  height: auto;
+}
+/* Align option text with controls */
+.radio-group label,
+.checkbox-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.radio-group input[type="radio"],
+.checkbox-group input[type="checkbox"] {
+  margin-right: 8px;
+}
 input:focus,
 select:focus,
 textarea:focus {
