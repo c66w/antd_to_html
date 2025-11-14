@@ -55,37 +55,32 @@ body {
   border: 1px solid rgba(22, 119, 255, 0.08);
   box-shadow: 0 40px 90px -48px rgba(22, 44, 90, 0.35);
   overflow: hidden;
+  position: relative;
 }
 .form-context-banner {
+  position: absolute;
+  right: 36px;
+  top: 22px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px 36px;
-  font-size: 15px;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
   background: rgba(22, 119, 255, 0.08);
-  border-bottom: 1px solid rgba(22, 119, 255, 0.12);
-  color: var(--text-secondary);
+  border: 1px solid rgba(22, 119, 255, 0.28);
+  border-radius: 12px;
+  color: #0958d9;
 }
-.form-context-label { font-weight: 600; color: var(--primary-color); }
+.form-context-label { font-weight: 500; color: var(--primary-color); }
 .form-context-value {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-color);
   word-break: break-all;
-}
-.form-context-copy {
-  padding: 6px 14px;
-  font-size: 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(22, 119, 255, 0.35);
-  background: rgba(22, 119, 255, 0.12);
-  color: var(--primary-color);
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-.form-context-copy:hover {
-  background: rgba(22, 119, 255, 0.16);
-  border-color: rgba(22, 119, 255, 0.45);
+  /* Easier to select: click selects text */
+  user-select: all;
+  -webkit-user-select: all;
+  cursor: text;
 }
 .generated-form {
   padding: 40px 48px;
@@ -180,34 +175,34 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 112px;
-  padding: 12px 28px;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  border-radius: 999px;
+  min-width: 80px;
+  padding: 7.5px 15px;
+  font-size: 15px;
+  font-weight: 400;
+  border-radius: 9999px;
   cursor: pointer;
   border: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .primary-button {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  background: linear-gradient(135deg, #1677ff 0%, #0b69e3 100%);
   color: #fff;
-  box-shadow: 0 18px 36px -18px rgba(9, 88, 217, 0.7);
+  box-shadow: 0 6px 15px -10px rgba(11, 105, 227, 0.48);
 }
 .primary-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 20px 40px -16px rgba(9, 88, 217, 0.8);
+  box-shadow: 0 7px 18px -10px rgba(11, 105, 227, 0.55);
 }
 .secondary-button {
-  background: rgba(22, 119, 255, 0.08);
-  color: var(--primary-color);
-  border: 1px solid rgba(22, 119, 255, 0.35);
+  background: transparent;
+  color: #1677ff;
+  border: 1px solid #1677ff;
   box-shadow: none;
 }
 .secondary-button:hover {
-  background: rgba(22, 119, 255, 0.12);
-  border-color: rgba(22, 119, 255, 0.45);
+  background: rgba(22, 119, 255, 0.06);
+  border-color: #0b69e3;
+  color: #0b69e3;
 }
 .primary-button:active,
 .secondary-button:active {
@@ -284,49 +279,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 """.strip()
 
-CONTEXT_COPY_SCRIPT = """
-document.addEventListener('click', event => {
-  const trigger = event.target.closest('[data-copy-text]');
-  if (!trigger) return;
-  const text = trigger.dataset.copyText || '';
-  if (!text) return;
 
-  const original = trigger.dataset.copyLabel || trigger.textContent || '';
-  const successLabel = trigger.dataset.copySuccess || '已复制';
-  const failureLabel = trigger.dataset.copyFailure || '复制失败';
-  const reset = () => {
-    trigger.disabled = false;
-    trigger.textContent = original;
-  };
-  const show = (label, delay = 1500) => {
-    trigger.textContent = label;
-    setTimeout(reset, delay);
-  };
-
-  trigger.disabled = true;
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => show(successLabel))
-      .catch(() => show(failureLabel, 1800));
-  } else {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      const ok = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      show(ok ? successLabel : failureLabel, ok ? 1500 : 1800);
-    } catch (err) {
-      document.body.removeChild(textarea);
-      show(failureLabel, 1800);
-    }
-  }
+SELECT_ON_CLICK_SCRIPT = """
+// Select all text inside the context value when clicked
+document.addEventListener('click', (event) => {
+  const el = event.target.closest('.form-context-value');
+  if (!el) return;
+  try {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } catch (_) {}
 });
 """.strip()
 
@@ -368,7 +334,6 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
         '<div class="form-context-banner">'
         f'<span class="form-context-label">{escape_html(label)}：</span>'
         f'<span class="form-context-value">{escape_html(value)}</span>'
-        f'<button type="button" class="form-context-copy" data-copy-text="{escape_html(value)}" data-copy-label="复制" data-copy-success="已复制" data-copy-failure="复制失败">复制</button>'
         '</div>'
       )
 
@@ -396,7 +361,7 @@ def convert_antd_form_to_html(definition: Mapping[str, Any], *, options: Mapping
   if definition.get("submit"):
     scripts.append(build_submit_script(definition["submit"]))  # type: ignore[arg-type]
   if context_banner_enabled:
-    scripts.append(CONTEXT_COPY_SCRIPT)
+    scripts.append(SELECT_ON_CLICK_SCRIPT)
   script_block = "\n".join(f"<script>\n{script}\n</script>" for script in scripts)
 
   styles = None
