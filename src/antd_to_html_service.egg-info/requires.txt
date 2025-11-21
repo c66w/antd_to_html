@@ -4,6 +4,8 @@ psycopg[binary]>=3.1
 psycopg_pool>=3.1
 python-dotenv>=1.0
 pydantic>=2.5
+elasticsearch<9,>=8.11
+aiohttp>=3.9
 
 [dev]
 pytest>=7.4

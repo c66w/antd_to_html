@@ -9,6 +9,8 @@ Requires-Dist: psycopg[binary]>=3.1
 Requires-Dist: psycopg_pool>=3.1
 Requires-Dist: python-dotenv>=1.0
 Requires-Dist: pydantic>=2.5
+Requires-Dist: elasticsearch<9,>=8.11
+Requires-Dist: aiohttp>=3.9
 Provides-Extra: dev
 Requires-Dist: pytest>=7.4; extra == "dev"
 Requires-Dist: httpx>=0.25; extra == "dev"
