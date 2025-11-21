@@ -6,7 +6,7 @@ from fastapi import FastAPI
 import logging
 import time
 
-from .api import instances, pages, runtime, templates
+from .api import html_pages, instances, pages, runtime, templates
 
 
 def _configure_logging() -> None:
@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
   app.include_router(templates.router)
   app.include_router(instances.router)
   app.include_router(runtime.router)
+  app.include_router(html_pages.router)
 
   # HTTP request/response logging middleware (covers all interfaces)
   http_logger = logging.getLogger("http")
@@ -76,7 +77,7 @@ def create_app() -> FastAPI:
 
   # Print all routes at startup
   route_logger = logging.getLogger(__name__)
-  route_logger.info("FastAPI app created: routers registered [pages, templates, instances, runtime]")
+  route_logger.info("FastAPI app created: routers registered [pages, templates, instances, runtime, html_pages]")
   for route in app.routes:
     methods = sorted([m for m in getattr(route, "methods", set()) or set() if m])
     path = getattr(route, "path", None) or getattr(route, "path_format", None) or str(route)

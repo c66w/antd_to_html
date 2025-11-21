@@ -1,5 +1,5 @@
 """Expose API routers."""
 
-from . import instances, pages, runtime, templates
+from . import html_pages, instances, pages, runtime, templates
 
-__all__ = ["instances", "pages", "runtime", "templates"]
+__all__ = ["html_pages", "instances", "pages", "runtime", "templates"]
