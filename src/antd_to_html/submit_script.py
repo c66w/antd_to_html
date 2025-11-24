@@ -49,7 +49,7 @@ def build_submit_script(submit_config: Mapping[str, Any]) -> str:
     status: null
   }};
 
-  var updateText = CONFIG.updateText || '更新';
+  var updateText = CONFIG.updateText || '已提交';
 
   ready(function() {{
     var button = document.querySelector(CONFIG.buttonSelector || 'button[type=\"submit\"]');
@@ -190,7 +190,7 @@ def build_submit_script(submit_config: Mapping[str, Any]) -> str:
         submissionState.status = data.status || submissionState.status;
         applyPayloadToForm(form, data.payload);
         if (updateText) {{
-          setButtonState(button, updateText, false);
+          setButtonState(button, updateText, true);
         }}
       }})
       .catch(function(error) {{

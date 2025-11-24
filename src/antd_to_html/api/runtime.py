@@ -7,7 +7,6 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Response
 
-from ..config import get_settings
 from ..models import Submission, SubmissionCreate
 from ..render import convert_antd_form_to_html
 from ..repositories import (
@@ -125,13 +124,7 @@ def merge_definition_with_runtime(template: dict, runtime_config: dict, instance
     elif submission_runtime.get("endpoint"):
       submit_config["submissionEndpoint"] = submission_runtime["endpoint"]
     else:
-      # 获取 API 基础 URL，如果配置了则使用完整 URL，否则使用相对路径
-      settings = get_settings()
-      base_url = settings.api_base_url.rstrip('/') if settings.api_base_url else ''
-      if base_url:
-        submit_config["submissionEndpoint"] = f"{base_url}/forms/{instance_slug}/submissions"
-      else:
-        submit_config["submissionEndpoint"] = f"/forms/{instance_slug}/submissions"
+      submit_config["submissionEndpoint"] = f"/forms/{instance_slug}/submissions"
 
   if "submissionHeaders" not in submit_config and submission_runtime.get("headers"):
     submit_config["submissionHeaders"] = submission_runtime["headers"]
@@ -143,7 +136,7 @@ def merge_definition_with_runtime(template: dict, runtime_config: dict, instance
 
   if "updateText" not in submit_config:
     submit_config["updateText"] = (
-      submission_runtime.get("updateText") or submit_config.get("updateText") or "更新"
+      submission_runtime.get("updateText") or submit_config.get("updateText") or "已提交"
     )
 
   if submission_runtime.get("submissionId"):
