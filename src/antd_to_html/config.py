@@ -23,6 +23,7 @@ class Settings:
   es_username: str = ""
   es_password: str = ""
   es_index: str = "html_pages"
+  api_base_url: str = ""  # API 基础 URL，用于生成完整的 submissionEndpoint
 
   @property
   def pg_dsn(self) -> str:
@@ -46,4 +47,5 @@ def get_settings() -> Settings:
     es_username=os.getenv("ES_USERNAME", Settings.es_username),
     es_password=os.getenv("ES_PASSWORD", Settings.es_password),
     es_index=os.getenv("ES_INDEX", Settings.es_index),
+    api_base_url=os.getenv("API_BASE_URL", Settings.api_base_url),
   )
