@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("", response_model=Instance)
-def create_form_instance(payload: InstanceCreate) -> Instance:
+async def create_form_instance(payload: InstanceCreate) -> Instance:
   logger.info(
     "Create instance request: slug=%s template_slug=%s name=%s runtime_keys=%s",
     payload.slug,
@@ -30,7 +30,7 @@ def create_form_instance(payload: InstanceCreate) -> Instance:
   if not payload.template_slug:
     raise HTTPException(status_code=400, detail="template_slug is required.")
 
-  template_row = get_template_by_slug(payload.template_slug)
+  template_row = await get_template_by_slug(payload.template_slug)
   if not template_row:
     logger.warning(
       "Template not found when creating instance (template_slug=%s).",
@@ -39,7 +39,7 @@ def create_form_instance(payload: InstanceCreate) -> Instance:
     raise HTTPException(status_code=404, detail="Template not found.")
 
   try:
-    row = create_instance(payload, str(template_row["slug"]))
+    row = await create_instance(payload, str(template_row["slug"]))
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -49,9 +49,9 @@ def create_form_instance(payload: InstanceCreate) -> Instance:
 
 
 @router.get("/{instance_id}", response_model=InstanceDetail)
-def read_form_instance(instance_id: str) -> InstanceDetail:
+async def read_form_instance(instance_id: str) -> InstanceDetail:
   logger.info("Read instance request: id=%s", instance_id)
-  record = get_instance_with_template(instance_id)
+  record = await get_instance_with_template(instance_id)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
 

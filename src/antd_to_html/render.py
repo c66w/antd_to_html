@@ -209,6 +209,15 @@ textarea:focus {
   transform: translateY(0);
   box-shadow: none;
 }
+.primary-button:disabled,
+.primary-button.submit-btn-disabled,
+.primary-button.is-submit-disabled {
+  background: #d9d9d9;
+  color: #8c8c8c;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
 @media (max-width: 768px) {
   body { padding: 32px 12px; }
   .form-row { flex-direction: column; margin: 0 0 20px; }

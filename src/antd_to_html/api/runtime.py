@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/forms/{instance_slug}/view", response_class=Response)
-def render_form(instance_slug: str) -> Response:
+async def render_form(instance_slug: str) -> Response:
   logger.info("Render form request: instance_slug=%s", instance_slug)
-  record = get_instance_with_template(instance_slug)
+  record = await get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
@@ -50,7 +50,7 @@ def render_form(instance_slug: str) -> Response:
 
 
 @router.post("/forms/{instance_slug}/submissions", response_model=Submission)
-def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
+async def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
   payload_len = len((payload.payload or {})) if hasattr(payload, "payload") else 0
   logger.info(
     "Submit form request: instance_slug=%s status=%s callback_status=%s payload_len=%s",
@@ -59,7 +59,7 @@ def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
     payload.callback_status,
     payload_len,
   )
-  record = get_instance_with_template(instance_slug)
+  record = await get_instance_with_template(instance_slug)
   if not record:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
@@ -67,7 +67,7 @@ def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
     payload.status = "submitted"
 
   try:
-    row = save_submission(instance_slug, payload)
+    row = await save_submission(instance_slug, payload)
   except RepositoryError as exc:
     raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -77,13 +77,13 @@ def submit_form(instance_slug: str, payload: SubmissionCreate) -> Submission:
 
 
 @router.get("/forms/{instance_slug}/submissions", response_model=Submission)
-def load_submission(instance_slug: str, submission_id: str | None = None) -> Submission:
+async def load_submission(instance_slug: str, submission_id: str | None = None) -> Submission:
   logger.info("Load submission request: instance_slug=%s submission_id=%s", instance_slug, submission_id)
-  instance = get_instance(instance_slug)
+  instance = await get_instance(instance_slug)
   if not instance:
     raise HTTPException(status_code=404, detail="Instance not found.")
 
-  row = get_submission(instance_slug, submission_id=submission_id)
+  row = await get_submission(instance_slug, submission_id=submission_id)
   if not row:
     raise HTTPException(status_code=404, detail="Submission not found.")
 

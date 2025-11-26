@@ -53,7 +53,7 @@ PREVIEW_BANNER_HTML = (
 
 
 @router.post("", response_model=Template)
-def create_form_template(payload: TemplateCreate) -> Template:
+async def create_form_template(payload: TemplateCreate) -> Template:
   logger.info(
     "Create template request: slug=%s title=%s version=%s def_keys=%s html_opt_keys=%s",
     payload.slug,
@@ -67,7 +67,7 @@ def create_form_template(payload: TemplateCreate) -> Template:
     raise HTTPException(status_code=422, detail=errors)
 
   try:
-    row = create_template(payload)
+    row = await create_template(payload)
   except TemplateConflictError as exc:
     raise HTTPException(status_code=409, detail=str(exc)) from exc
   except RepositoryError as exc:
@@ -79,26 +79,26 @@ def create_form_template(payload: TemplateCreate) -> Template:
 
 
 @router.get("/{identifier}", response_model=Template)
-def read_form_template(identifier: str) -> Template:
+async def read_form_template(identifier: str) -> Template:
   logger.info("Read template request: identifier=%s", identifier)
-  template = _get_template_by_identifier(identifier)
+  template = await _get_template_by_identifier(identifier)
   tmpl = Template.model_validate(template)
   logger.info("Returning template: slug=%s version=%s", tmpl.slug, tmpl.version)
   return tmpl
 
 
-@router.delete("/{identifier}", status_code=204)
-def delete_form_template(identifier: str) -> None:
+@router.delete("/{identifier}", status_code=204, response_class=Response)
+async def delete_form_template(identifier: str) -> None:
   logger.info("Delete template request: identifier=%s", identifier)
-  template = _get_template_by_identifier(identifier)
-  delete_template_by_id(str(template["slug"]))
+  template = await _get_template_by_identifier(identifier)
+  await delete_template_by_id(str(template["slug"]))
   logger.info("Template deleted: slug=%s", template["slug"]) 
 
 
 @router.get("/{identifier}/preview", response_class=Response)
-def preview_form_template(identifier: str) -> Response:
+async def preview_form_template(identifier: str) -> Response:
   logger.info("Preview template request: identifier=%s", identifier)
-  template = _get_template_by_identifier(identifier)
+  template = await _get_template_by_identifier(identifier)
   definition = deepcopy(template.get("definition") or {})
   html_options = deepcopy(template.get("html_options") or {})
 
@@ -127,8 +127,8 @@ def preview_form_template(identifier: str) -> Response:
   return Response(content=html, media_type="text/html; charset=utf-8")
 
 
-def _get_template_by_identifier(identifier: str) -> Mapping[str, Any]:
-  template = get_template_by_id(identifier) or get_template_by_slug(identifier)
+async def _get_template_by_identifier(identifier: str) -> Mapping[str, Any]:
+  template = await get_template_by_id(identifier) or await get_template_by_slug(identifier)
   if not template:
     raise HTTPException(status_code=404, detail="Template not found.")
   return template

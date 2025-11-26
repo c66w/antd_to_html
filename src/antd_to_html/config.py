@@ -23,6 +23,9 @@ class Settings:
   es_username: str = ""
   es_password: str = ""
   es_index: str = "html_pages"
+  es_template_index: str = "form_templates"
+  es_instance_index: str = "form_instances"
+  es_submission_index: str = "form_submissions"
 
   @property
   def pg_dsn(self) -> str:
@@ -46,4 +49,7 @@ def get_settings() -> Settings:
     es_username=os.getenv("ES_USERNAME", Settings.es_username),
     es_password=os.getenv("ES_PASSWORD", Settings.es_password),
     es_index=os.getenv("ES_INDEX", Settings.es_index),
+    es_template_index=os.getenv("ES_TEMPLATE_INDEX", Settings.es_template_index),
+    es_instance_index=os.getenv("ES_INSTANCE_INDEX", Settings.es_instance_index),
+    es_submission_index=os.getenv("ES_SUBMISSION_INDEX", Settings.es_submission_index),
   )
