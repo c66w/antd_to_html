@@ -192,6 +192,8 @@ def build_submit_script(submit_config: Mapping[str, Any]) -> str:
         if (updateText) {{
           setButtonState(button, updateText, true);
         }}
+        disableFormFields(form);
+        disableResetButtons(form);
       }})
       .catch(function(error) {{
         if (error && console && console.warn) {{
@@ -533,6 +535,27 @@ def build_submit_script(submit_config: Mapping[str, Any]) -> str:
     for (var name in values) {{
       if (!Object.prototype.hasOwnProperty.call(values, name)) continue;
       setControlValue(form, name, values[name]);
+    }}
+  }}
+
+  function disableFormFields(form) {{
+    if (!form) return;
+    var controls = form.querySelectorAll('input, select, textarea, button');
+    for (var i = 0; i < controls.length; i += 1) {{
+      var el = controls[i];
+      // Keep disabled state consistent; no-op if already disabled
+      el.disabled = true;
+      el.classList.add('form-control-disabled');
+    }}
+  }}
+
+  function disableResetButtons(form) {{
+    if (!form) return;
+    var resets = form.querySelectorAll('button[type=\"reset\"], input[type=\"reset\"]');
+    for (var i = 0; i < resets.length; i += 1) {{
+      var el = resets[i];
+      el.disabled = true;
+      el.classList.add('reset-btn-disabled');
     }}
   }}
 
